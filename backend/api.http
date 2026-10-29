@@ -250,3 +250,110 @@ Authorization: Bearer {{loginSeed.response.body.token}}
 ### 29. Búsqueda sin resultados (Debe responder 200 con lista vacía)
 GET {{baseUrl}}/posts/explore?q=microscopio
 Authorization: Bearer {{loginSeed.response.body.token}}
+
+###
+
+### ===== Ofertas de trueque (ejecutar después de npm run seed) =====
+
+### 30. Iniciar sesión como Martita (usuario 0 del seed)
+# @name loginMartita
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "martita@truequeu.com",
+  "password": "Password123!"
+}
+
+###
+
+### 31. Ver las publicaciones de otros para tomar un id (Mouse, Calculadora, etc.)
+GET {{baseUrl}}/posts/explore?q=Larson
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+###
+
+### 32. Martita envía una oferta con mensaje (cambiar el id por el de "Cálculo diferencial – Larson")
+# @name sendOffer
+POST {{baseUrl}}/posts/ID_DE_LA_PUBLICACION/offers
+Content-Type: application/json
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+{
+  "message": "Te lo cambio por uno de mis libros"
+}
+
+###
+
+### 33. Martita envía otra oferta por la misma publicación (Debe responder 400, ya tiene una pendiente)
+POST {{baseUrl}}/posts/ID_DE_LA_PUBLICACION/offers
+Content-Type: application/json
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+{
+  "message": "Otra oferta"
+}
+
+###
+
+### 34. Oferta vacía (Debe responder 400)
+POST {{baseUrl}}/posts/ID_DE_LA_PUBLICACION/offers
+Content-Type: application/json
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+{}
+
+###
+
+### 35. Iniciar sesión como Admin (dueño de la publicación)
+# @name loginAdmin
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@truequeu.com",
+  "password": "Password123!"
+}
+
+###
+
+### 36. Admin ve las ofertas pendientes de su publicación
+GET {{baseUrl}}/posts/ID_DE_LA_PUBLICACION/offers
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+### 37. Martita intenta ver las ofertas de una publicación ajena (Debe responder 403)
+GET {{baseUrl}}/posts/ID_DE_LA_PUBLICACION/offers
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+###
+
+### 38. Martita intenta aceptar su propia oferta (Debe responder 403)
+PATCH {{baseUrl}}/offers/{{sendOffer.response.body.offer.id}}/accept
+Authorization: Bearer {{loginMartita.response.body.token}}
+
+###
+
+### 39. Admin rechaza la oferta (200: la publicación sigue disponible)
+PATCH {{baseUrl}}/offers/{{sendOffer.response.body.offer.id}}/reject
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+### 40. Admin vuelve a responder la misma oferta (Debe responder 400)
+PATCH {{baseUrl}}/offers/{{sendOffer.response.body.offer.id}}/accept
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+### 41. Admin acepta una oferta pendiente (200: la publicación queda "reservado" para quien ofertó)
+# Usar el id de una oferta de GET /posts/:id/offers (la del seed por la calculadora, por ejemplo)
+PATCH {{baseUrl}}/offers/ID_DE_LA_OFERTA/accept
+Authorization: Bearer {{loginAdmin.response.body.token}}
+
+###
+
+### 42. Historial de Martita: aparecen la oferta enviada y su respuesta
+GET {{baseUrl}}/activity
+Authorization: Bearer {{loginMartita.response.body.token}}
