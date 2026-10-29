@@ -11,6 +11,7 @@ app.use(express.json());
 
 app.use("/api", require("./routes/auth.routes"));
 app.use("/api", require("./routes/post.routes"));
+app.use("/api", require("./routes/offer.routes"));
 app.use("/api", require("./routes/activity.routes"));
 
 app.use(errorHandler);
