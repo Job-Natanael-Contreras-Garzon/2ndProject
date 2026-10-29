@@ -59,6 +59,15 @@ function describe(activity) {
     if (activity.type === "reserva_liberada") {
         return `Liberaste la reserva de ${title} de ${activity.otherUserName}`;
     }
+    if (activity.type === "oferta_enviada") {
+        return `Enviaste una oferta por ${title} a ${activity.otherUserName}`;
+    }
+    if (activity.type === "oferta_aceptada") {
+        return `${activity.otherUserName} aceptó tu oferta por ${title}`;
+    }
+    if (activity.type === "oferta_rechazada") {
+        return `${activity.otherUserName} rechazó tu oferta por ${title}`;
+    }
     if (activity.role === "receptor") {
         return `Recibiste ${title} de ${activity.otherUserName}`;
     }
@@ -100,7 +109,7 @@ watch(type, loadActivities, { immediate: true });
 
 <template>
     <div class="mx-auto max-w-3xl p-6">
-        <PageTitle title="Historial" subtitle="Revisa lo que has reservado y los intercambios que completaste" />
+        <PageTitle title="Historial" subtitle="Revisa tus ofertas, lo que has reservado y los intercambios que completaste" />
 
         <div role="tablist" class="tabs tabs-box mt-6">
             <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" @click="selectTab(tab.value)"
@@ -136,6 +145,18 @@ watch(type, loadActivities, { immediate: true });
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                         </svg>
+                        <svg v-else-if="activity.type === 'oferta_enviada'" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                            class="h-8 w-8 shrink-0 text-info">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                        </svg>
+                        <svg v-else-if="activity.type === 'oferta_rechazada'" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                            class="h-8 w-8 shrink-0 text-error">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
                         <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor" class="h-8 w-8 shrink-0 text-success">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -158,7 +179,7 @@ watch(type, loadActivities, { immediate: true });
                 <template v-if="type === ''">
                     <p class="font-semibold mt-3">Todavía no tienes actividad</p>
                     <p class="text-sm text-base-content/60 mt-1">
-                        Cuando reserves o completes un intercambio, aparecerá aquí.
+                        Cuando envíes una oferta, reserves o completes un intercambio, aparecerá aquí.
                     </p>
                     <RouterLink :to="{ name: 'dashboard' }" class="btn btn-primary mt-4">Ir a Explorar</RouterLink>
                 </template>

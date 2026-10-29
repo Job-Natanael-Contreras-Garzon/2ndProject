@@ -7,6 +7,8 @@ import { useAuthStore } from "@/stores/auth";
 
 import PageTitle from "@/components/PageTitle.vue";
 import StateBadge from "@/components/StateBadge.vue";
+import Modal from "@/components/Modal.vue";
+import OfferForm from "@/components/OfferForm.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -115,6 +117,24 @@ function loadPosts() {
 const completedPost = ref(null);
 const actionError = ref(null);
 
+// Oferta: publicación elegida, ventana abierta y aviso de oferta enviada
+const offerPost = ref(null);
+const isOfferOpen = ref(false);
+const offerSent = ref(null);
+
+function openOffer(post) {
+    actionError.value = null;
+    completedPost.value = null;
+    offerSent.value = null;
+    offerPost.value = post;
+    isOfferOpen.value = true;
+}
+
+function handleOfferSent() {
+    offerSent.value = { title: offerPost.value.title, owner: offerPost.value.owner?.name };
+    isOfferOpen.value = false;
+}
+
 function showCompleted() {
     completedPost.value = null;
     applyFilters({ state: "intercambiado" });
@@ -193,9 +213,10 @@ watch(
         <details class="mt-3 text-sm">
             <summary class="cursor-pointer link link-primary w-fit">¿Cómo funciona un intercambio?</summary>
             <ol class="list-decimal ml-6 mt-2 space-y-1 text-base-content/80">
-                <li>Pulsa <strong>Reservar</strong> en el objeto que te interesa. Mientras esté reservado, nadie más
-                    puede reservarlo.</li>
-                <li>Coordina la entrega con el dueño. Si cambias de opinión, usa <strong>Liberar reserva</strong>.</li>
+                <li>Pulsa <strong>Hacer oferta</strong> en el objeto que te interesa. Puedes ofrecer uno de tus
+                    productos o solo escribir un mensaje.</li>
+                <li>El dueño acepta o rechaza tu oferta. Si la acepta, el objeto queda reservado para ti y nadie
+                    más puede reservarlo. Si cambias de opinión, usa <strong>Liberar reserva</strong>.</li>
                 <li>Cuando recibas el objeto, pulsa <strong>Completar intercambio</strong>. Esta acción no se puede
                     deshacer.</li>
             </ol>
@@ -259,6 +280,17 @@ watch(
             </div>
         </div>
 
+        <div v-if="offerSent" role="status" class="alert alert-success shadow-sm mt-6 flex flex-wrap justify-between">
+            <div>
+                <p class="font-semibold">Oferta enviada: {{ offerSent.title }}</p>
+                <p class="text-sm">
+                    {{ offerSent.owner }} la verá y podrá aceptarla o rechazarla. Si la acepta, el objeto quedará
+                    reservado para ti.
+                </p>
+            </div>
+            <button type="button" @click="offerSent = null" class="btn btn-ghost btn-sm">Cerrar</button>
+        </div>
+
         <div v-if="actionError" role="alert" class="alert alert-error shadow-sm mt-6 flex flex-wrap justify-between">
             <div>
                 <p class="font-semibold">{{ actionError.title }}</p>
@@ -300,8 +332,8 @@ watch(
                         <StateBadge :state="post.state" />
                     </div>
                     <div v-if="post.state === 'disponible'">
-                        <button type="button" @click="handleToggleReservation(post)"
-                            class="btn btn-primary btn-sm">Reservar</button>
+                        <button type="button" @click="openOffer(post)"
+                            class="btn btn-primary btn-sm">Hacer oferta</button>
                     </div>
                     <template v-else-if="post.state === 'reservado' && post.reservedById === authStore.user?.id">
                         <p class="text-xs font-semibold">Reservado por ti</p>
@@ -332,5 +364,9 @@ watch(
                 <p v-else class="font-semibold mt-3">Todavía no hay publicaciones de otros estudiantes.</p>
             </div>
         </template>
+
+        <Modal v-model="isOfferOpen" title="Hacer una oferta">
+            <OfferForm v-if="isOfferOpen" :post="offerPost" @saved="handleOfferSent" @cancel="isOfferOpen = false" />
+        </Modal>
     </div>
 </template>

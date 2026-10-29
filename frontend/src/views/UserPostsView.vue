@@ -9,6 +9,7 @@ import DataTable from "@/components/DataTable.vue";
 import Modal from "@/components/Modal.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import PostForm from "@/components/PostForm.vue";
+import OfferList from "@/components/OfferList.vue";
 
 const authStore = useAuthStore();
 const postsStore = usePostsStore();
@@ -34,6 +35,21 @@ function openCreateModal() {
 function openEditModal(post) {
     selectedPost.value = { ...post };
     isModalOpen.value = true;
+}
+
+// Ofertas recibidas: publicación elegida y ventana abierta
+const offersPost = ref(null);
+const isOffersOpen = ref(false);
+
+function openOffers(post) {
+    offersPost.value = post;
+    isOffersOpen.value = true;
+}
+
+// Al aceptar, la publicación pasa a reservada: se cierra la ventana y se actualiza la tabla
+function handleAnswered(action) {
+    if (action === "accept") isOffersOpen.value = false;
+    postsStore.fetchPosts().catch(() => {});
 }
 
 function showActionError(err) {
@@ -158,9 +174,8 @@ onMounted(() => {
 
                         </div>
 
-                        <span v-if="post.state === 'disponible'" class="text-xs text-base-content/60">
-                            Para completar el intercambio, otro estudiante debe reservarlo primero
-                        </span>
+                        <button v-if="post.state === 'disponible'" type="button" @click="openOffers(post)"
+                            class="btn btn-outline btn-primary btn-sm">Ver ofertas recibidas</button>
                         <span v-if="post.state === 'reservado'" class="text-xs text-warning font-medium">
                             Reservado por {{ post.reservedBy?.name }}
                         </span>
@@ -178,6 +193,11 @@ onMounted(() => {
 
         <Modal v-model="isModalOpen" :title="selectedPost ? 'Editar publicación' : 'Nueva publicación'">
             <PostForm :post="selectedPost" @saved="isModalOpen = false" @cancel="isModalOpen = false" />
+        </Modal>
+
+        <Modal v-model="isOffersOpen" title="Ofertas recibidas">
+            <OfferList v-if="isOffersOpen" :post="offersPost" @answered="handleAnswered"
+                @close="isOffersOpen = false" />
         </Modal>
     </div>
 </template>
