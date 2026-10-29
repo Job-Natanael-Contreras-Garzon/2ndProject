@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 require("./config");
-const { sequelize, User, Post, Activity } = require("../models");
+const { sequelize, User, Post, Activity, Offer } = require("../models");
 
 const users = [
     { name: "Martita Becerra", email: "martita@truequeu.com" },
@@ -33,6 +33,26 @@ const activities = [
     { user: 1, type: "reservado", post: "Apuntes de cálculo integral", other: 0, createdAt: "2026-10-12T14:10:00" },
     { user: 1, type: "reservado", post: "Audífonos Sony WH-CH520", other: 0, createdAt: "2026-10-16T18:25:00" },
     { user: 1, type: "intercambio_completado", role: "receptor", post: "Bata de laboratorio", other: 0, createdAt: "2026-10-18T11:40:00" },
+    { user: 0, type: "oferta_enviada", post: "Calculadora Casio fx-991", other: 1, createdAt: "2026-10-27T09:15:00" },
+    { user: 2, type: "oferta_enviada", post: "Calculadora Casio fx-991", other: 1, createdAt: "2026-10-28T15:30:00" },
+];
+
+// Ofertas pendientes por la calculadora de Admin Demo (usuario 1)
+const offers = [
+    {
+        proposer: 0,
+        target: "Calculadora Casio fx-991",
+        offered: "Química general – Chang",
+        message: "Te cambio mi libro de Química, está casi nuevo.",
+        createdAt: "2026-10-27T09:15:00",
+    },
+    {
+        proposer: 2,
+        target: "Calculadora Casio fx-991",
+        offered: null,
+        message: "¿La cambias por unos apuntes de clase?",
+        createdAt: "2026-10-28T15:30:00",
+    },
 ];
 
 async function run() {
@@ -87,6 +107,18 @@ async function run() {
             });
         }
         console.log(`+ ${activities.length} eventos de actividad`);
+
+        console.log("Insertando ofertas semilla...");
+        for (const data of offers) {
+            await Offer.create({
+                targetPostId: createdPosts[data.target].id,
+                offeredPostId: data.offered ? createdPosts[data.offered].id : null,
+                proposerId: createdUsers[data.proposer].id,
+                message: data.message,
+                createdAt: new Date(data.createdAt),
+            });
+        }
+        console.log(`+ ${offers.length} ofertas pendientes`);
 
         console.log("Carga de datos inicial completada.");
         process.exit(0);

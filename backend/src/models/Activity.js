@@ -18,7 +18,16 @@ Activity.init(
             type: DataTypes.TEXT,
             allowNull: false,
             validate: {
-                isIn: [["reservado", "reserva_liberada", "intercambio_completado"]],
+                isIn: [
+                    [
+                        "reservado",
+                        "reserva_liberada",
+                        "intercambio_completado",
+                        "oferta_enviada",
+                        "oferta_aceptada",
+                        "oferta_rechazada",
+                    ],
+                ],
             },
         },
         role: {
