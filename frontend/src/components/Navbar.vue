@@ -32,7 +32,7 @@ async function logout() {
                     </li>
                     <li>
                         <RouterLink :to="{ name: 'posts' }" exact-active-class="active font-medium">
-                            Mis pubs
+                            Mis publicaciones
                         </RouterLink>
                     </li>
                     <li>

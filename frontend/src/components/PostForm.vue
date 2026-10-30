@@ -95,7 +95,7 @@ async function handleSubmit() {
                 </button>
                 <button type="submit" class="btn btn-primary" :disabled="submitting">
                     <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
-                    {{ post ? "Guardar cambios" : "Publicar" }}
+                    {{ post ? "Guardar cambios" : "Post" }}
                 </button>
             </div>
         </form>
