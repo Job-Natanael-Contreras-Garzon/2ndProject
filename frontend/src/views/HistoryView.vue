@@ -68,6 +68,12 @@ function describe(activity) {
     if (activity.type === "oferta_rechazada") {
         return `${activity.otherUserName} rechazó tu oferta por ${title}`;
     }
+    if (activity.type === "contraoferta_enviada") {
+        return `Enviaste una contraoferta por ${title} a ${activity.otherUserName}`;
+    }
+    if (activity.type === "contraoferta_recibida") {
+        return `Recibiste una contraoferta por ${title} de ${activity.otherUserName}`;
+    }
     if (activity.role === "receptor") {
         return `Recibiste ${title} de ${activity.otherUserName}`;
     }
@@ -145,9 +151,9 @@ watch(type, loadActivities, { immediate: true });
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
                         </svg>
-                        <svg v-else-if="activity.type === 'oferta_enviada'" xmlns="http://www.w3.org/2000/svg"
-                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                            class="h-8 w-8 shrink-0 text-info">
+                        <svg v-else-if="activity.type === 'oferta_enviada' || activity.type === 'contraoferta_enviada' || activity.type === 'contraoferta_recibida'"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                            stroke="currentColor" class="h-8 w-8 shrink-0 text-info">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                         </svg>

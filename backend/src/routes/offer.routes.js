@@ -6,5 +6,6 @@ router.post("/posts/:id/offers", verifyToken, c.create);
 router.get("/posts/:id/offers", verifyToken, c.listByPost);
 router.patch("/offers/:id/accept", verifyToken, c.accept);
 router.patch("/offers/:id/reject", verifyToken, c.reject);
+router.patch("/offers/:id/counter", verifyToken, c.counter);
 
 module.exports = router;

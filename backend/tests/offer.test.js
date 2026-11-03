@@ -41,10 +41,10 @@ describe("Ofertas de trueque", () => {
         return res.json.mock.calls[0][0].offers;
     }
 
-    async function answer(action, user, offer) {
+    async function answer(action, user, offer, body = {}) {
         const res = buildRes();
         await offerController[action](
-            { user: { id: user.id }, params: { id: offer.id } },
+            { user: { id: user.id }, params: { id: offer.id }, body },
             res,
         );
         return res.json.mock.calls[0][0];
@@ -209,5 +209,24 @@ describe("Ofertas de trueque", () => {
         );
 
         expect(await Offer.findByPk(offer.id)).toBeNull();
+    });
+
+    test("10. contraofertar actualiza la oferta y registra la actividad en el historial de ambos", async () => {
+        const offer = await sendOffer(ana, post, { message: "Te doy mis apuntes" });
+
+        await answer("counter", owner, offer, {
+            message: "Te acepto si agregas un cuaderno",
+        });
+
+        const updatedOffer = await Offer.findByPk(offer.id);
+        expect(updatedOffer.status).toBe("contraoferta");
+        expect(updatedOffer.message).toBe("Te acepto si agregas un cuaderno");
+
+        const ownerHistory = await historyOf(owner);
+        expect(ownerHistory.map((a) => a.type)).toContain("contraoferta_enviada");
+        expect(ownerHistory[0].otherUserName).toBe("Ana Torres");
+
+        const anaHistory = await historyOf(ana);
+        expect(anaHistory.map((a) => a.type)).toContain("contraoferta_recibida");
     });
 });

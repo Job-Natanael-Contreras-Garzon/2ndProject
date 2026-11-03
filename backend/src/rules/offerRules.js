@@ -25,13 +25,13 @@ function getOfferError(post, userId, offeredPost, pendingOffer) {
     return null;
 }
 
-// Reglas para aceptar o rechazar una oferta.
+// Reglas para aceptar, rechazar o contraofertar una oferta.
 function getRespondError(offer, post, userId) {
     if (post.userId !== userId) {
         return "Solo el dueño de la publicación puede responder ofertas.";
     }
 
-    if (offer.status !== "pendiente") {
+    if (offer.status !== "pendiente" && offer.status !== "contraoferta") {
         return "Esta oferta ya fue respondida.";
     }
 
@@ -50,4 +50,9 @@ function getAcceptError(offer, post, userId) {
     return null;
 }
 
-module.exports = { getOfferError, getRespondError, getAcceptError };
+// Contraofertar también exige que la publicación siga disponible.
+function getCounterError(offer, post, userId) {
+    return getAcceptError(offer, post, userId);
+}
+
+module.exports = { getOfferError, getRespondError, getAcceptError, getCounterError };

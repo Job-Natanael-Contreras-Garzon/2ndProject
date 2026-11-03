@@ -26,6 +26,8 @@ Activity.init(
                         "oferta_enviada",
                         "oferta_aceptada",
                         "oferta_rechazada",
+                        "contraoferta_enviada",
+                        "contraoferta_recibida",
                     ],
                 ],
             },

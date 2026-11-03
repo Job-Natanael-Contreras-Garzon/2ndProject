@@ -74,5 +74,13 @@ export const useOffersStore = defineStore("offers", () => {
         );
     }
 
-    return { sendOffer, fetchOffers, acceptOffer, rejectOffer };
+    function counterOffer(id, counterData) {
+        return call(
+            `/offers/${id}/counter`,
+            { method: "PATCH", body: JSON.stringify(counterData) },
+            "Error al enviar la contraoferta",
+        );
+    }
+
+    return { sendOffer, fetchOffers, acceptOffer, rejectOffer, counterOffer };
 });

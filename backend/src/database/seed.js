@@ -35,10 +35,18 @@ const activities = [
     { user: 1, type: "intercambio_completado", role: "receptor", post: "Bata de laboratorio", other: 0, createdAt: "2026-10-18T11:40:00" },
     { user: 0, type: "oferta_enviada", post: "Calculadora Casio fx-991", other: 1, createdAt: "2026-10-27T09:15:00" },
     { user: 2, type: "oferta_enviada", post: "Calculadora Casio fx-991", other: 1, createdAt: "2026-10-28T15:30:00" },
+    { user: 0, type: "oferta_enviada", post: "Álgebra lineal – Grossman", other: 1, createdAt: "2026-10-29T10:00:00" },
 ];
 
-// Ofertas pendientes por la calculadora de Admin Demo (usuario 1)
+// Ofertas pendientes para las publicaciones de Admin Demo (usuario 1)
 const offers = [
+    {
+        proposer: 0,
+        target: "Álgebra lineal – Grossman",
+        offered: null,
+        message: "te ofrezco mi vida",
+        createdAt: "2026-10-29T10:00:00",
+    },
     {
         proposer: 0,
         target: "Calculadora Casio fx-991",

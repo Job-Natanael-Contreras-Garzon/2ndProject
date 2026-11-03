@@ -5,6 +5,7 @@ const {
     getOfferError,
     getRespondError,
     getAcceptError,
+    getCounterError,
 } = require("../rules/offerRules");
 
 // Enviar una oferta por la publicación de otro usuario
@@ -64,7 +65,7 @@ exports.create = async (req, res) => {
     res.status(201).json({ message: "Oferta enviada.", offer });
 };
 
-// Ofertas pendientes que recibió una publicación (solo las ve su dueño)
+// Ofertas pendientes o en contraoferta que recibió una publicación (solo las ve su dueño)
 exports.listByPost = async (req, res) => {
     const post = await Post.findByPk(req.params.id);
     if (!post) {
@@ -75,7 +76,10 @@ exports.listByPost = async (req, res) => {
     }
 
     const offers = await Offer.findAll({
-        where: { targetPostId: post.id, status: "pendiente" },
+        where: {
+            targetPostId: post.id,
+            status: { [Op.in]: ["pendiente", "contraoferta"] },
+        },
         include: [
             { model: User, as: "proposer", attributes: ["id", "name"] },
             {
@@ -105,7 +109,11 @@ exports.accept = async (req, res) => {
 
     const owner = await User.findByPk(req.user.id);
     const otherOffers = await Offer.findAll({
-        where: { targetPostId: post.id, status: "pendiente", id: { [Op.ne]: offer.id } },
+        where: {
+            targetPostId: post.id,
+            status: { [Op.in]: ["pendiente", "contraoferta"] },
+            id: { [Op.ne]: offer.id },
+        },
     });
 
     // Todo o nada: si algo falla, no se guarda ningún cambio
@@ -170,4 +178,63 @@ exports.reject = async (req, res) => {
     });
 
     res.json({ message: "Oferta rechazada.", offer });
+};
+
+// El dueño realiza una contraoferta: se registra en el historial de ambos usuarios
+exports.counter = async (req, res) => {
+    const offer = await Offer.findByPk(req.params.id);
+    if (!offer) {
+        throw new HttpError(404, "Oferta no encontrada.");
+    }
+    const post = await Post.findByPk(offer.targetPostId);
+
+    const { message } = req.body || {};
+    if (!message || !message.trim()) {
+        throw new HttpError(400, "Escribe un mensaje para la contraoferta.");
+    }
+    if (message.length > 200) {
+        throw new HttpError(400, "El mensaje no puede pasar de 200 caracteres.");
+    }
+
+    const error = getCounterError(offer, post, req.user.id);
+    if (error) {
+        const status = post.userId !== req.user.id ? 403 : 400;
+        throw new HttpError(status, error);
+    }
+
+    const owner = await User.findByPk(req.user.id);
+    const proposer = await User.findByPk(offer.proposerId);
+
+    await sequelize.transaction(async (t) => {
+        await offer.update(
+            { status: "contraoferta", message: message.trim() },
+            { transaction: t },
+        );
+
+        // Historial del dueño que envía la contraoferta
+        await Activity.create(
+            {
+                userId: req.user.id,
+                type: "contraoferta_enviada",
+                postId: post.id,
+                postTitle: post.title,
+                otherUserName: proposer ? proposer.name : "Usuario eliminado",
+            },
+            { transaction: t },
+        );
+
+        // Historial del ofertante que recibe la contraoferta
+        await Activity.create(
+            {
+                userId: offer.proposerId,
+                type: "contraoferta_recibida",
+                postId: post.id,
+                postTitle: post.title,
+                otherUserName: owner ? owner.name : "Usuario eliminado",
+            },
+            { transaction: t },
+        );
+    });
+
+    res.json({ message: "Contraoferta enviada.", offer });
 };

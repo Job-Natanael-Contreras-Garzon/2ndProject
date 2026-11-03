@@ -46,9 +46,9 @@ function openOffers(post) {
     isOffersOpen.value = true;
 }
 
-// Al aceptar, la publicación pasa a reservada: se cierra la ventana y se actualiza la tabla
+// Al aceptar o enviar contraoferta, se cierra la ventana y se actualiza la tabla
 function handleAnswered(action) {
-    if (action === "accept") isOffersOpen.value = false;
+    if (action === "accept" || action === "counter") isOffersOpen.value = false;
     postsStore.fetchPosts().catch(() => {});
 }
 
