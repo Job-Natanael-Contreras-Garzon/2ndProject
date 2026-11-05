@@ -10,6 +10,7 @@ import Modal from "@/components/Modal.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import PostForm from "@/components/PostForm.vue";
 import OfferList from "@/components/OfferList.vue";
+import CancelExchangeForm from "@/components/CancelExchangeForm.vue";
 
 const authStore = useAuthStore();
 const postsStore = usePostsStore();
@@ -67,27 +68,52 @@ async function handleDelete(id) {
     }
 }
 
-async function handleToggleReservation(id) {
-    actionError.value = "";
-    try {
-        await postsStore.toggleReservation(id);
-    } catch (err) {
-        showActionError(err);
-    }
-}
-
-async function handleComplete(post) {
+// Confirmar la entrega: con la confirmación de ambas partes el intercambio se completa
+async function handleConfirm(post) {
     const message = `¿Confirmas que entregaste "${post.title}" a ${post.reservedBy?.name}? ` +
-        "El intercambio quedará cerrado y no se puede deshacer.";
+        "El intercambio se completará cuando ambas personas confirmen.";
     if (!confirm(message)) return;
     actionError.value = "";
+    cancelledTitle.value = "";
     try {
-        await postsStore.completeExchange(post.id);
+        await postsStore.confirmDelivery(post.id);
     } catch (err) {
         showActionError(err);
+        return;
     }
+    postsStore.fetchPosts().catch(() => {});
 }
 
+// Cancelar el intercambio acordado con un motivo
+const cancelPost = ref(null);
+const isCancelOpen = ref(false);
+const cancelBusy = ref(false);
+const cancelError = ref("");
+const cancelledTitle = ref("");
+
+function openCancel(post) {
+    actionError.value = "";
+    cancelledTitle.value = "";
+    cancelError.value = "";
+    cancelPost.value = post;
+    isCancelOpen.value = true;
+}
+
+async function handleCancel(reason) {
+    cancelBusy.value = true;
+    cancelError.value = "";
+    try {
+        await postsStore.cancelExchange(cancelPost.value.id, reason);
+        isCancelOpen.value = false;
+        cancelledTitle.value = cancelPost.value.title;
+    } catch (err) {
+        cancelError.value = err.message;
+        return;
+    } finally {
+        cancelBusy.value = false;
+    }
+    postsStore.fetchPosts().catch(() => {});
+}
 onMounted(() => {
     postsStore.fetchPosts();
 });
@@ -109,6 +135,14 @@ onMounted(() => {
         <div v-if="actionError" role="alert" class="alert alert-error shadow-sm mb-4 flex justify-between">
             <span>{{ actionError }} La lista se actualizó con el estado actual.</span>
             <button type="button" @click="actionError = ''" class="btn btn-ghost btn-sm">Cerrar</button>
+        </div>
+
+        <div v-if="cancelledTitle" role="status" class="alert alert-info shadow-sm mb-4 flex justify-between">
+            <span>
+                Intercambio cancelado: {{ cancelledTitle }}. La publicación volvió a estar disponible y el motivo
+                quedó en tu historial.
+            </span>
+            <button type="button" @click="cancelledTitle = ''" class="btn btn-ghost btn-sm">Cerrar</button>
         </div>
 
         <DataTable :items="posts" :loading="loading" :error="error" :colspan="5"
@@ -138,10 +172,10 @@ onMounted(() => {
                         <div class="flex flex-wrap items-center gap-1">
 
                             <template v-if="post.state === 'reservado'">
-                                <button type="button" @click="handleComplete(post)"
-                                    class="btn btn-success btn-sm">Completar intercambio</button>
-                                <button type="button" @click="handleToggleReservation(post.id)"
-                                    class="btn btn-ghost btn-sm">Liberar reserva</button>
+                                <button v-if="!post.ownerConfirmed" type="button" @click="handleConfirm(post)"
+                                    class="btn btn-success btn-sm">Confirmar entrega</button>
+                                <button type="button" @click="openCancel(post)"
+                                    class="btn btn-ghost btn-sm">Cancelar intercambio</button>
                             </template>
 
                             <div class="tooltip tooltip-left"
@@ -179,6 +213,13 @@ onMounted(() => {
                         <span v-if="post.state === 'reservado'" class="text-xs text-warning font-medium">
                             Reservado por {{ post.reservedBy?.name }}
                         </span>
+                        <span v-if="post.state === 'reservado' && post.receiverConfirmed" class="text-xs font-medium">
+                            {{ post.reservedBy?.name }} ya confirmó la entrega.
+                        </span>
+                        <span v-if="post.state === 'reservado' && post.ownerConfirmed"
+                            class="text-xs font-semibold text-success">
+                            Confirmaste la entrega. Esperando confirmación de {{ post.reservedBy?.name }}.
+                        </span>
                         <span v-if="post.state === 'intercambiado'" class="text-xs opacity-60 font-medium">
                             Intercambiado, no se puede modificar
                         </span>
@@ -193,6 +234,12 @@ onMounted(() => {
 
         <Modal v-model="isModalOpen" :title="selectedPost ? 'Editar publicación' : 'Nueva publicación'">
             <PostForm :post="selectedPost" @saved="isModalOpen = false" @cancel="isModalOpen = false" />
+        </Modal>
+
+        <Modal v-model="isCancelOpen" title="Cancelar intercambio">
+            <CancelExchangeForm v-if="isCancelOpen" :title="cancelPost.title" :other-name="cancelPost.reservedBy?.name"
+                :server-error="cancelError" :submitting="cancelBusy" @submit="handleCancel"
+                @cancel="isCancelOpen = false" />
         </Modal>
 
         <Modal v-model="isOffersOpen" title="Ofertas recibidas">

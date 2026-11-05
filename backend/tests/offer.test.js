@@ -189,14 +189,16 @@ describe("Ofertas de trueque", () => {
         );
     });
 
-    test("8. después de aceptar, quien ofertó puede completar el intercambio", async () => {
+    test("8. después de aceptar, el intercambio se completa cuando confirman ambas partes", async () => {
         const offer = await sendOffer(ana, post, { message: "mi oferta" });
         await answer("accept", owner, offer);
 
-        await postController.complete(
-            { user: { id: ana.id }, params: { id: post.id } },
-            buildRes(),
-        );
+        for (const user of [ana, owner]) {
+            await postController.confirm(
+                { user: { id: user.id }, params: { id: post.id } },
+                buildRes(),
+            );
+        }
 
         expect((await Post.findByPk(post.id)).state).toBe("intercambiado");
     });

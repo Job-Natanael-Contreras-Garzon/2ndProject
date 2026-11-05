@@ -20,7 +20,7 @@ Offer.init(
             type: DataTypes.TEXT,
             allowNull: false,
             defaultValue: "pendiente",
-            validate: { isIn: [["pendiente", "aceptada", "rechazada", "contraoferta"]] },
+            validate: { isIn: [["pendiente", "aceptada", "rechazada", "contraoferta", "cancelada"]] },
         },
     },
     {

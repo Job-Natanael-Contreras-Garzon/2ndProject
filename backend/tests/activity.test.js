@@ -133,10 +133,13 @@ describe("Historial de actividad", () => {
 
     test("5. el filtro de intercambios solo devuelve intercambios completados", async () => {
         await reserve(student);
-        await postController.complete(
-            { user: { id: student.id }, params: { id: post.id } },
-            buildRes(),
-        );
+        // El intercambio se completa cuando confirman ambas partes
+        for (const user of [student, owner]) {
+            await postController.confirm(
+                { user: { id: user.id }, params: { id: post.id } },
+                buildRes(),
+            );
+        }
 
         const exchanges = await listActivity(student, { type: "intercambios" });
         const reservations = await listActivity(student, { type: "reservas" });

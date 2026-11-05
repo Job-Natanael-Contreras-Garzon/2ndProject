@@ -3,21 +3,27 @@ import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useActivityStore } from "@/stores/activity";
+import { useAuthStore } from "@/stores/auth";
 
 import PageTitle from "@/components/PageTitle.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import Modal from "@/components/Modal.vue";
+import OfferThread from "@/components/OfferThread.vue";
 
 const route = useRoute();
 const router = useRouter();
 const activityStore = useActivityStore();
+const authStore = useAuthStore();
 const { activities, loading, error } = storeToRefs(activityStore);
 
 const tabs = [
     { value: "", label: "Todos" },
     { value: "reservas", label: "Reservas" },
     { value: "intercambios", label: "Intercambios" },
+    { value: "ofertas", label: "Ofertas" },
+    { value: "cancelaciones", label: "Cancelaciones" },
 ];
+const typeValues = tabs.map((tab) => tab.value).filter(Boolean);
 const categoryLabels = {
     libros: "Libros",
     electronica: "Electrónica",
@@ -33,12 +39,18 @@ const detailError = ref(null);
 
 const type = computed(() => {
     const value = route.query.type;
-    return value === "reservas" || value === "intercambios" ? value : "";
+    return typeValues.includes(value) ? value : "";
 });
 
 const emptyText = computed(() => {
     if (type.value === "reservas") {
         return "Todavía no tienes reservas registradas.";
+    }
+    if (type.value === "ofertas") {
+        return "Todavía no tienes ofertas ni contraofertas registradas.";
+    }
+    if (type.value === "cancelaciones") {
+        return "No has cancelado ni te han cancelado ningún intercambio.";
     }
     return "Todavía no has completado ningún intercambio.";
 });
@@ -73,6 +85,16 @@ function describe(activity) {
     }
     if (activity.type === "contraoferta_recibida") {
         return `Recibiste una contraoferta por ${title} de ${activity.otherUserName}`;
+    }
+    if (activity.type === "entrega_confirmada") {
+        return activity.actorId === authStore.user?.id
+            ? `Confirmaste la entrega de ${title} con ${activity.otherUserName}`
+            : `${activity.otherUserName} confirmó la entrega de ${title}`;
+    }
+    if (activity.type === "intercambio_cancelado") {
+        return activity.actorId === authStore.user?.id
+            ? `Cancelaste el intercambio de ${title} con ${activity.otherUserName}`
+            : `${activity.otherUserName} canceló el intercambio de ${title}`;
     }
     if (activity.role === "receptor") {
         return `Recibiste ${title} de ${activity.otherUserName}`;
@@ -115,7 +137,7 @@ watch(type, loadActivities, { immediate: true });
 
 <template>
     <div class="mx-auto max-w-3xl p-6">
-        <PageTitle title="Historial" subtitle="Revisa tus ofertas, lo que has reservado y los intercambios que completaste" />
+        <PageTitle title="Historial" subtitle="Revisa tus ofertas, confirmaciones de entrega, cancelaciones y los intercambios que completaste" />
 
         <div role="tablist" class="tabs tabs-box mt-6">
             <button v-for="tab in tabs" :key="tab.value" type="button" role="tab" @click="selectTab(tab.value)"
@@ -157,19 +179,27 @@ watch(type, loadActivities, { immediate: true });
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                         </svg>
-                        <svg v-else-if="activity.type === 'oferta_rechazada'" xmlns="http://www.w3.org/2000/svg"
+                        <svg v-else-if="activity.type === 'oferta_rechazada' || activity.type === 'intercambio_cancelado'" xmlns="http://www.w3.org/2000/svg"
                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                             class="h-8 w-8 shrink-0 text-error">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        <svg v-else-if="activity.type === 'entrega_confirmada'" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                            class="h-8 w-8 shrink-0 text-info">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                        </svg>                        <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="1.5" stroke="currentColor" class="h-8 w-8 shrink-0 text-success">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                         <div>
                             <p class="font-semibold text-lg">{{ describe(activity) }}</p>
+                            <p v-if="activity.reason" class="text-sm mt-1">
+                                <span class="font-medium">Motivo:</span> {{ activity.reason }}
+                            </p>
                             <p class="text-sm text-base-content/60 mt-1">{{ formatDate(activity.createdAt) }}</p>
                         </div>
                     </button>
@@ -214,6 +244,10 @@ watch(type, loadActivities, { immediate: true });
                     <dd>{{ detail.otherUserName }}</dd>
                     <dt class="text-base-content/60">Fecha y hora</dt>
                     <dd>{{ formatFullDate(detail.createdAt) }}</dd>
+                    <template v-if="detail.reason">
+                        <dt class="text-base-content/60">Motivo</dt>
+                        <dd data-testid="detail-reason">{{ detail.reason }}</dd>
+                    </template>
                     <template v-if="detail.Post">
                         <dt class="text-base-content/60">Estado actual</dt>
                         <dd><StateBadge :state="detail.Post.state" /></dd>
@@ -226,6 +260,11 @@ watch(type, loadActivities, { immediate: true });
                 <p v-if="!detail.Post" class="text-sm text-base-content/60">
                     Esta publicación ya no está disponible.
                 </p>
+
+                <div v-if="detail.offerId" class="border-t border-base-300 pt-3">
+                    <p class="font-semibold text-sm mb-2">Negociación</p>
+                    <OfferThread :offer-id="detail.offerId" />
+                </div>
             </div>
 
             <div class="modal-action">

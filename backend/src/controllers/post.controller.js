@@ -1,8 +1,9 @@
 const { Op } = require("sequelize");
-const { Post, User, Activity } = require("../models");
+const { sequelize, Post, User, Activity, Offer, OfferMessage } = require("../models");
 const { HttpError } = require("../middleware/errorHandler");
 const {
-    getCompleteError,
+    getConfirmError,
+    getCancelError,
     getReserveError,
     getEditError,
 } = require("../rules/postRules");
@@ -177,20 +178,63 @@ exports.toggleReservation = async (req, res) => {
     res.json({ message: "Publicación reservada.", post });
 };
 
-exports.complete = async (req, res) => {
+// Cada parte confirma la entrega. La primera confirmación no completa nada; con la segunda
+// el intercambio pasa a completado.
+exports.confirm = async (req, res) => {
     const post = await Post.findByPk(req.params.id);
 
     if (!post) {
         throw new HttpError(404, "Publicación no encontrada.");
     }
 
-    const error = getCompleteError(post, req.user.id);
+    const error = getConfirmError(post, req.user.id);
     if (error) {
-        const status = post.state === "reservado" ? 403 : 400;
-        throw new HttpError(status, error);
+        const isParticipant =
+            post.userId === req.user.id || post.reservedById === req.user.id;
+        throw new HttpError(isParticipant ? 400 : 403, error);
     }
 
-    await post.update({ state: "intercambiado" });
+    const isOwner = post.userId === req.user.id;
+    const otherId = isOwner ? post.reservedById : post.userId;
+    const flags = isOwner ? { ownerConfirmed: true } : { receiverConfirmed: true };
+    const ownerDone = isOwner || post.ownerConfirmed;
+    const receiverDone = !isOwner || post.receiverConfirmed;
+    const completed = Boolean(ownerDone && receiverDone);
+
+    const myName = await getUserName(req.user.id);
+    const otherName = await getUserName(otherId);
+    const myRole = isOwner ? "entregador" : "receptor";
+    const otherRole = isOwner ? "receptor" : "entregador";
+
+    await post.update(completed ? { ...flags, state: "intercambiado" } : flags);
+
+    // Historial de ambas partes: quién confirmó la entrega
+    await Activity.create({
+        userId: req.user.id,
+        type: "entrega_confirmada",
+        role: myRole,
+        postId: post.id,
+        postTitle: post.title,
+        otherUserName: otherName,
+        actorId: req.user.id,
+    });
+    await Activity.create({
+        userId: otherId,
+        type: "entrega_confirmada",
+        role: otherRole,
+        postId: post.id,
+        postTitle: post.title,
+        otherUserName: myName,
+        actorId: req.user.id,
+    });
+
+    if (!completed) {
+        return res.json({
+            message: "Confirmaste la entrega. Falta la confirmación de la otra parte.",
+            completed: false,
+            post,
+        });
+    }
 
     await Activity.create({
         userId: post.reservedById,
@@ -211,6 +255,95 @@ exports.complete = async (req, res) => {
 
     res.json({
         message: "Intercambio completado.",
+        completed: true,
         post,
     });
+};
+
+// Cualquiera de las dos partes puede cancelar con motivo antes de completarse: la publicación
+// vuelve a estar disponible y las ofertas anteriores no se reactivan.
+exports.cancel = async (req, res) => {
+    const post = await Post.findByPk(req.params.id);
+
+    if (!post) {
+        throw new HttpError(404, "Publicación no encontrada.");
+    }
+
+    const { reason } = req.body || {};
+    const error = getCancelError(post, req.user.id, reason);
+    if (error) {
+        const isParticipant =
+            post.userId === req.user.id || post.reservedById === req.user.id;
+        throw new HttpError(isParticipant ? 400 : 403, error);
+    }
+
+    const text = reason.trim();
+    const isOwner = post.userId === req.user.id;
+    const otherId = isOwner ? post.reservedById : post.userId;
+    const myName = await getUserName(req.user.id);
+    const otherName = await getUserName(otherId);
+
+    await sequelize.transaction(async (t) => {
+        await post.update(
+            {
+                state: "disponible",
+                reservedById: null,
+                ownerConfirmed: false,
+                receiverConfirmed: false,
+            },
+            { transaction: t },
+        );
+
+        // La oferta aceptada queda cancelada con el motivo en su hilo; las demás
+        // ya estaban rechazadas y siguen así.
+        const accepted = await Offer.findOne({
+            where: {
+                targetPostId: post.id,
+                proposerId: post.userId === req.user.id ? otherId : req.user.id,
+                status: "aceptada",
+            },
+            transaction: t,
+        });
+        if (accepted) {
+            await accepted.update({ status: "cancelada" }, { transaction: t });
+            await OfferMessage.create(
+                {
+                    offerId: accepted.id,
+                    senderId: req.user.id,
+                    kind: "sistema",
+                    text: `${myName} canceló el intercambio. Motivo: ${text}`,
+                },
+                { transaction: t },
+            );
+        }
+
+        await Activity.create(
+            {
+                userId: req.user.id,
+                type: "intercambio_cancelado",
+                role: isOwner ? "entregador" : "receptor",
+                postId: post.id,
+                postTitle: post.title,
+                otherUserName: otherName,
+                actorId: req.user.id,
+                reason: text,
+            },
+            { transaction: t },
+        );
+        await Activity.create(
+            {
+                userId: otherId,
+                type: "intercambio_cancelado",
+                role: isOwner ? "receptor" : "entregador",
+                postId: post.id,
+                postTitle: post.title,
+                otherUserName: myName,
+                actorId: req.user.id,
+                reason: text,
+            },
+            { transaction: t },
+        );
+    });
+
+    res.json({ message: "Intercambio cancelado.", post });
 };

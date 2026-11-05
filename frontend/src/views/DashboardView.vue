@@ -10,6 +10,7 @@ import StateBadge from "@/components/StateBadge.vue";
 import Modal from "@/components/Modal.vue";
 import OfferForm from "@/components/OfferForm.vue";
 import OfferThread from "@/components/OfferThread.vue";
+import CancelExchangeForm from "@/components/CancelExchangeForm.vue";
 import { useOffersStore } from "@/stores/offers";
 
 const route = useRoute();
@@ -151,6 +152,7 @@ function openThread(post) {
 }
 
 const completedPost = ref(null);
+const cancelledPost = ref(null);
 const actionError = ref(null);
 
 // Oferta: publicación elegida, ventana abierta y aviso de oferta enviada
@@ -182,56 +184,65 @@ function showAvailable() {
     applyFilters({ state: "disponible" });
 }
 
-async function handleToggleReservation(post) {
-    const reserving = post.state === "disponible";
+// Confirmar la entrega: con la confirmación de ambas partes el intercambio se completa
+async function handleConfirm(post) {
+    const message = `¿Confirmas que recibiste "${post.title}" de ${post.owner?.name}? ` +
+        "El intercambio se completará cuando ambas personas confirmen.";
+    if (!confirm(message)) return;
     actionError.value = null;
     completedPost.value = null;
     try {
-        await postsStore.toggleReservation(post.id);
-    } catch (err) {
-        if (err.network) {
-            actionError.value = {
-                title: reserving ? `No se pudo reservar "${post.title}"` : `No se pudo liberar la reserva de "${post.title}"`,
-                text: err.message,
-            };
-            return;
+        const data = await postsStore.confirmDelivery(post.id);
+        if (data.completed) {
+            completedPost.value = { title: post.title, owner: post.owner?.name };
         }
-        actionError.value = reserving
-            ? {
-                  title: `No se pudo reservar "${post.title}"`,
-                  text: "Otra persona lo reservó antes que tú o ya fue intercambiado. Actualizamos la lista: elige otro objeto disponible.",
-                  canShowAvailable: true,
-              }
-            : { title: `No se pudo liberar la reserva de "${post.title}"`, text: err.message };
-    }
-    loadPosts();
-}
-
-async function handleComplete(post) {
-    const message = `¿Confirmas que recibiste "${post.title}" de ${post.owner?.name}? ` +
-        "El intercambio quedará cerrado y no se puede deshacer.";
-    if (!confirm(message)) return;
-    actionError.value = null;
-    try {
-        await postsStore.completeExchange(post.id);
-        completedPost.value = { title: post.title, owner: post.owner?.name };
     } catch (err) {
-        actionError.value = { title: `No se pudo completar el intercambio de "${post.title}"`, text: err.message };
+        actionError.value = { title: `No se pudo confirmar la entrega de "${post.title}"`, text: err.message };
         if (err.network) return;
     }
     loadPosts();
 }
 
+// Cancelar el intercambio acordado con un motivo
+const cancelPost = ref(null);
+const isCancelOpen = ref(false);
+const cancelBusy = ref(false);
+const cancelError = ref("");
+
+function openCancel(post) {
+    actionError.value = null;
+    completedPost.value = null;
+    cancelError.value = "";
+    cancelPost.value = post;
+    isCancelOpen.value = true;
+}
+
+async function handleCancel(reason) {
+    cancelBusy.value = true;
+    cancelError.value = "";
+    try {
+        await postsStore.cancelExchange(cancelPost.value.id, reason);
+        isCancelOpen.value = false;
+        cancelledPost.value = { title: cancelPost.value.title };
+    } catch (err) {
+        cancelError.value = err.message;
+        if (err.network) return;
+    } finally {
+        cancelBusy.value = false;
+    }
+    loadPosts();
+}
 watch(q, (value) => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(() => {
-        if (value.trim() !== filters.value.q) search();
+        if (route.name === "dashboard" && value.trim() !== filters.value.q) search();
     }, 400);
 });
 
 watch(
     () => route.query,
     () => {
+        if (route.name !== "dashboard") return;
         if (q.value.trim() !== filters.value.q) q.value = filters.value.q;
         category.value = filters.value.category;
         condition.value = filters.value.condition;
@@ -252,10 +263,12 @@ watch(
             <ol class="list-decimal ml-6 mt-2 space-y-1 text-base-content/80">
                 <li>Pulsa <strong>Hacer oferta</strong> en el objeto que te interesa. Puedes ofrecer uno de tus
                     productos o solo escribir un mensaje.</li>
-                <li>El dueño acepta o rechaza tu oferta. Si la acepta, el objeto queda reservado para ti y nadie
-                    más puede reservarlo. Si cambias de opinión, usa <strong>Liberar reserva</strong>.</li>
-                <li>Cuando recibas el objeto, pulsa <strong>Completar intercambio</strong>. Esta acción no se puede
-                    deshacer.</li>
+                <li>El dueño acepta, rechaza o contraoferta. Si acepta, el objeto queda reservado para ti y nadie
+                    más puede reservarlo. Puedes seguir la conversación en <strong>Ver negociación</strong>.</li>
+                <li>Cuando ambas personas se entreguen el objeto, cada una pulsa <strong>Confirmar entrega</strong>.
+                    El intercambio se completa solo cuando confirman las dos.</li>
+                <li>Si algo falla antes de completarse, cualquiera puede pulsar <strong>Cancelar intercambio</strong>
+                    e indicar el motivo: la publicación vuelve a estar disponible.</li>
             </ol>
         </details>
 
@@ -315,6 +328,14 @@ watch(
                 <button type="button" @click="showCompleted" class="btn btn-sm">Ver intercambiados</button>
                 <button type="button" @click="completedPost = null" class="btn btn-ghost btn-sm">Cerrar</button>
             </div>
+        </div>
+
+        <div v-if="cancelledPost" role="status" class="alert alert-info shadow-sm mt-6 flex flex-wrap justify-between">
+            <div>
+                <p class="font-semibold">Intercambio cancelado: {{ cancelledPost.title }}</p>
+                <p class="text-sm">La publicación volvió a estar disponible. El motivo quedó en tu historial.</p>
+            </div>
+            <button type="button" @click="cancelledPost = null" class="btn btn-ghost btn-sm">Cerrar</button>
         </div>
 
         <div v-if="offerSent" role="status" class="alert alert-success shadow-sm mt-6 flex flex-wrap justify-between">
@@ -380,11 +401,17 @@ watch(
                     </div>
                     <template v-else-if="post.state === 'reservado' && post.reservedById === authStore.user?.id">
                         <p class="text-xs font-semibold">Reservado por ti</p>
+                        <p v-if="post.ownerConfirmed" class="text-xs text-base-content/70">
+                            {{ post.owner?.name }} ya confirmó la entrega.
+                        </p>
+                        <p v-if="post.receiverConfirmed" class="text-xs font-semibold text-success">
+                            Confirmaste la entrega. Esperando confirmación de {{ post.owner?.name }}.
+                        </p>
                         <div class="flex flex-wrap gap-2">
-                            <button type="button" @click="handleComplete(post)"
-                                class="btn btn-success btn-sm">Completar intercambio</button>
-                            <button type="button" @click="handleToggleReservation(post)"
-                                class="btn btn-ghost btn-sm">Liberar reserva</button>
+                            <button v-if="!post.receiverConfirmed" type="button" @click="handleConfirm(post)"
+                                class="btn btn-success btn-sm">Confirmar entrega</button>
+                            <button type="button" @click="openCancel(post)"
+                                class="btn btn-ghost btn-sm">Cancelar intercambio</button>
                         </div>
                     </template>
                     <p v-else-if="post.state === 'reservado'" class="text-xs text-base-content/60">
@@ -407,6 +434,12 @@ watch(
                 <p v-else class="font-semibold mt-3">Todavía no hay publicaciones de otros estudiantes.</p>
             </div>
         </template>
+
+        <Modal v-model="isCancelOpen" title="Cancelar intercambio">
+            <CancelExchangeForm v-if="isCancelOpen" :title="cancelPost.title" :other-name="cancelPost.owner?.name"
+                :server-error="cancelError" :submitting="cancelBusy" @submit="handleCancel"
+                @cancel="isCancelOpen = false" />
+        </Modal>
 
         <Modal v-model="isThreadOpen" title="Negociación">
             <OfferThread v-if="isThreadOpen" :offer-id="threadOffer.id" @replied="loadMyOffers" />

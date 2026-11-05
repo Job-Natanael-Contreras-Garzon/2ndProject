@@ -143,23 +143,43 @@ describe("Restricciones de estado en publicaciones", () => {
         expect(mockPost.update).not.toHaveBeenCalled();
     });
 
-    test("6. deberia completar el intercambio si el estado es reservado", async () => {
+    test("6. la primera confirmación de entrega no completa el intercambio", async () => {
         mockPost.state = "reservado";
+        mockPost.reservedById = 2;
         Post.findByPk.mockResolvedValue(mockPost);
 
-        await postController.complete(mockReq, mockRes);
+        await postController.confirm(mockReq, mockRes);
 
-        expect(mockPost.update).toHaveBeenCalledWith({ state: "intercambiado" });
-        expect(mockPost.title).toBe("Libro de Estructura de Datos");
-        expect(mockPost.category).toBe("libros");
-        expect(mockRes.json).toHaveBeenCalled();
+        expect(mockPost.update).toHaveBeenCalledWith({ ownerConfirmed: true });
+        expect(mockRes.json).toHaveBeenCalledWith(
+            expect.objectContaining({ completed: false }),
+        );
     });
 
-    test("7. restriccion, deberia rechazar completar si el estado es disponible", async () => {
+    test("6b. la segunda confirmación de entrega completa el intercambio", async () => {
+        mockPost.state = "reservado";
+        mockPost.reservedById = 2;
+        mockPost.receiverConfirmed = true;
         Post.findByPk.mockResolvedValue(mockPost);
 
-        await expect(postController.complete(mockReq, mockRes)).rejects.toThrow(
-            "Solo puedes completar una publicación reservada.",
+        await postController.confirm(mockReq, mockRes);
+
+        expect(mockPost.update).toHaveBeenCalledWith({
+            ownerConfirmed: true,
+            state: "intercambiado",
+        });
+        expect(mockPost.title).toBe("Libro de Estructura de Datos");
+        expect(mockPost.category).toBe("libros");
+        expect(mockRes.json).toHaveBeenCalledWith(
+            expect.objectContaining({ completed: true }),
+        );
+    });
+
+    test("7. restriccion, deberia rechazar confirmar si el estado es disponible", async () => {
+        Post.findByPk.mockResolvedValue(mockPost);
+
+        await expect(postController.confirm(mockReq, mockRes)).rejects.toThrow(
+            "Solo puedes confirmar la entrega de una publicación reservada.",
         );
 
         expect(mockPost.update).not.toHaveBeenCalled();

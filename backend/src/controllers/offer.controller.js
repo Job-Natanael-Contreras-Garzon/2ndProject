@@ -67,6 +67,7 @@ exports.create = async (req, res) => {
     await Activity.create({
         userId: req.user.id,
         type: "oferta_enviada",
+        offerId: offer.id,
         postId: post.id,
         postTitle: post.title,
         otherUserName: owner ? owner.name : "Usuario eliminado",
@@ -137,6 +138,7 @@ exports.accept = async (req, res) => {
             {
                 userId: offer.proposerId,
                 type: "oferta_aceptada",
+                offerId: offer.id,
                 postId: post.id,
                 postTitle: post.title,
                 otherUserName: owner.name,
@@ -151,6 +153,7 @@ exports.accept = async (req, res) => {
                 {
                     userId: other.proposerId,
                     type: "oferta_rechazada",
+                    offerId: other.id,
                     postId: post.id,
                     postTitle: post.title,
                     otherUserName: owner.name,
@@ -182,6 +185,7 @@ exports.reject = async (req, res) => {
     await Activity.create({
         userId: offer.proposerId,
         type: "oferta_rechazada",
+        offerId: offer.id,
         postId: post.id,
         postTitle: post.title,
         otherUserName: owner.name,
@@ -237,6 +241,7 @@ exports.counter = async (req, res) => {
             {
                 userId: req.user.id,
                 type: "contraoferta_enviada",
+                offerId: offer.id,
                 postId: post.id,
                 postTitle: post.title,
                 otherUserName: proposer ? proposer.name : "Usuario eliminado",
@@ -249,6 +254,7 @@ exports.counter = async (req, res) => {
             {
                 userId: offer.proposerId,
                 type: "contraoferta_recibida",
+                offerId: offer.id,
                 postId: post.id,
                 postTitle: post.title,
                 otherUserName: owner ? owner.name : "Usuario eliminado",

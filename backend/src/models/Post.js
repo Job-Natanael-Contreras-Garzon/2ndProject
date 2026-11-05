@@ -36,6 +36,17 @@ Post.init(
             type: DataTypes.UUID,
             allowNull: true,
         },
+        // Confirmación de entrega de cada parte: solo con ambas el intercambio se completa
+        ownerConfirmed: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+        receiverConfirmed: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
     },
     { 
         sequelize, 

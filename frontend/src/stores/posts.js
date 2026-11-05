@@ -165,19 +165,18 @@ export const usePostsStore = defineStore("posts", () => {
         return data;
     }
 
-    async function completeExchange(id) {
-        const res = await request(`${API_URL}/posts/${id}/complete`, {
+    // Peticion PATCH comun de las acciones del intercambio acordado
+    async function exchangeAction(id, action, body, defaultMessage) {
+        const res = await request(`${API_URL}/posts/${id}/${action}`, {
             method: "PATCH",
             headers: getHeaders(),
+            body: body ? JSON.stringify(body) : undefined,
         });
 
         const data = await res.json();
 
         if (!res.ok) {
-            throw new Error(
-                data.message || data.error ||
-                    "Error al completar el intercambio",
-            );
+            throw new Error(data.message || data.error || defaultMessage);
         }
         const index = posts.value.findIndex((p) => p.id === id);
 
@@ -187,6 +186,15 @@ export const usePostsStore = defineStore("posts", () => {
         return data;
     }
 
+    // Confirma la entrega de la parte actual; con ambas confirmaciones se completa (data.completed)
+    function confirmDelivery(id) {
+        return exchangeAction(id, "confirm", null, "Error al confirmar la entrega");
+    }
+
+    // Cancela el intercambio acordado indicando el motivo
+    function cancelExchange(id, reason) {
+        return exchangeAction(id, "cancel", { reason }, "Error al cancelar el intercambio");
+    }
     return {
         posts,
         loading,
@@ -200,6 +208,7 @@ export const usePostsStore = defineStore("posts", () => {
         updatePost,
         deletePost,
         toggleReservation,
-        completeExchange,
+        confirmDelivery,
+        cancelExchange,
     };
 });

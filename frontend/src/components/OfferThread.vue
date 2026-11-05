@@ -35,6 +35,7 @@ const statusLabels = {
     contraoferta: "Contraoferta enviada: esperando respuesta de quien ofertó",
     aceptada: "Oferta aceptada",
     rechazada: "Oferta rechazada",
+    cancelada: "Intercambio cancelado",
 };
 
 const isProposer = computed(() => offer.value?.proposerId === authStore.user?.id);

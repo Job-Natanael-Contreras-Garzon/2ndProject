@@ -28,6 +28,8 @@ Activity.init(
                         "oferta_rechazada",
                         "contraoferta_enviada",
                         "contraoferta_recibida",
+                        "entrega_confirmada",
+                        "intercambio_cancelado",
                     ],
                 ],
             },
@@ -48,6 +50,21 @@ Activity.init(
         otherUserName: {
             type: DataTypes.STRING,
             allowNull: false,
+        },
+        // Quién realizó la acción (para saber si fue el propio usuario o la otra parte)
+        actorId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+        // Oferta relacionada (si la hay), para abrir su negociación desde el historial
+        offerId: {
+            type: DataTypes.UUID,
+            allowNull: true,
+        },
+        // Motivo de una cancelación
+        reason: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
     },
     {
