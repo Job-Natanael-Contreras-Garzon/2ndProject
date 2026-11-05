@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useOffersStore } from "@/stores/offers";
+import OfferThread from "@/components/OfferThread.vue";
 
 const props = defineProps({
     // Publicación propia de la que se ven las ofertas recibidas
@@ -30,6 +31,13 @@ const busyId = ref(null);
 
 const counterOfferId = ref(null);
 const counterMessage = ref("");
+
+// Oferta cuyo hilo de negociación está desplegado
+const threadOfferId = ref(null);
+
+function toggleThread(offer) {
+    threadOfferId.value = threadOfferId.value === offer.id ? null : offer.id;
+}
 
 async function loadOffers() {
     loading.value = true;
@@ -147,7 +155,13 @@ onMounted(loadOffers);
                         class="btn btn-warning btn-sm">Contraofertar</button>
                     <button type="button" @click="answer(offer, 'reject')" :disabled="busyId !== null"
                         class="btn btn-ghost btn-sm">Rechazar</button>
+                    <button type="button" @click="toggleThread(offer)" class="btn btn-outline btn-sm">
+                        {{ threadOfferId === offer.id ? "Ocultar negociación" : "Ver negociación" }}
+                    </button>
                 </div>
+
+                <OfferThread v-if="threadOfferId === offer.id" :offer-id="offer.id"
+                    class="mt-2 border-t border-base-300 pt-3" />
 
                 <form v-if="counterOfferId === offer.id" @submit.prevent="sendCounter(offer)"
                     class="mt-2 flex flex-col gap-2 border-t border-base-300 pt-3">

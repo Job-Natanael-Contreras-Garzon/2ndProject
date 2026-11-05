@@ -9,6 +9,8 @@ import PageTitle from "@/components/PageTitle.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import Modal from "@/components/Modal.vue";
 import OfferForm from "@/components/OfferForm.vue";
+import OfferThread from "@/components/OfferThread.vue";
+import { useOffersStore } from "@/stores/offers";
 
 const route = useRoute();
 const router = useRouter();
@@ -112,6 +114,40 @@ function clearFilters() {
 
 function loadPosts() {
     postsStore.fetchExplore(filters.value);
+    loadMyOffers();
+}
+
+// Ofertas que envié yo: permiten ver la negociación desde la card de cada publicación
+const offersStore = useOffersStore();
+const myOffers = ref([]);
+const threadOffer = ref(null);
+const isThreadOpen = ref(false);
+
+async function loadMyOffers() {
+    try {
+        myOffers.value = await offersStore.fetchMyOffers();
+    } catch {
+        myOffers.value = [];
+    }
+}
+
+// Oferta más reciente que envié por cada publicación (la lista llega ordenada de más nueva a más vieja)
+const offerByPost = computed(() => {
+    const map = {};
+    for (const offer of myOffers.value) {
+        if (!map[offer.targetPostId]) map[offer.targetPostId] = offer;
+    }
+    return map;
+});
+
+function hasActiveOffer(post) {
+    const status = offerByPost.value[post.id]?.status;
+    return status === "pendiente" || status === "contraoferta";
+}
+
+function openThread(post) {
+    threadOffer.value = offerByPost.value[post.id];
+    isThreadOpen.value = true;
 }
 
 const completedPost = ref(null);
@@ -133,6 +169,7 @@ function openOffer(post) {
 function handleOfferSent() {
     offerSent.value = { title: offerPost.value.title, owner: offerPost.value.owner?.name };
     isOfferOpen.value = false;
+    loadMyOffers();
 }
 
 function showCompleted() {
@@ -331,7 +368,13 @@ watch(
                     <div>
                         <StateBadge :state="post.state" />
                     </div>
-                    <div v-if="post.state === 'disponible'">
+                    <div v-if="offerByPost[post.id]" class="flex flex-wrap items-center gap-2">
+                        <span v-if="offerByPost[post.id].status === 'contraoferta'"
+                            class="badge badge-warning badge-sm">Nueva contraoferta</span>
+                        <button type="button" @click="openThread(post)"
+                            class="btn btn-outline btn-primary btn-sm">Ver negociación</button>
+                    </div>
+                    <div v-if="post.state === 'disponible' && !hasActiveOffer(post)">
                         <button type="button" @click="openOffer(post)"
                             class="btn btn-primary btn-sm">Hacer oferta</button>
                     </div>
@@ -364,6 +407,13 @@ watch(
                 <p v-else class="font-semibold mt-3">Todavía no hay publicaciones de otros estudiantes.</p>
             </div>
         </template>
+
+        <Modal v-model="isThreadOpen" title="Negociación">
+            <OfferThread v-if="isThreadOpen" :offer-id="threadOffer.id" @replied="loadMyOffers" />
+            <div class="modal-action mt-6">
+                <button type="button" @click="isThreadOpen = false" class="btn btn-primary">Cerrar</button>
+            </div>
+        </Modal>
 
         <Modal v-model="isOfferOpen" title="Hacer una oferta">
             <OfferForm v-if="isOfferOpen" :post="offerPost" @saved="handleOfferSent" @cancel="isOfferOpen = false" />

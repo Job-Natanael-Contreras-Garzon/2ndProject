@@ -55,4 +55,37 @@ function getCounterError(offer, post, userId) {
     return getAcceptError(offer, post, userId);
 }
 
-module.exports = { getOfferError, getRespondError, getAcceptError, getCounterError };
+// Solo el dueño de la publicación y quien ofertó pueden ver el hilo de negociación.
+function getThreadError(offer, post, userId) {
+    if (post.userId !== userId && offer.proposerId !== userId) {
+        return "Solo el dueño y quien ofertó pueden ver esta negociación.";
+    }
+
+    return null;
+}
+
+// Solo quien ofertó puede responder, y únicamente a una contraoferta de una publicación disponible.
+function getReplyError(offer, post, userId) {
+    if (offer.proposerId !== userId) {
+        return "Solo quien hizo la oferta puede responder a la contraoferta.";
+    }
+
+    if (offer.status !== "contraoferta") {
+        return "Solo puedes responder cuando el dueño te envió una contraoferta.";
+    }
+
+    if (post.state !== "disponible") {
+        return "La publicación ya no está disponible.";
+    }
+
+    return null;
+}
+
+module.exports = {
+    getOfferError,
+    getRespondError,
+    getAcceptError,
+    getCounterError,
+    getThreadError,
+    getReplyError,
+};

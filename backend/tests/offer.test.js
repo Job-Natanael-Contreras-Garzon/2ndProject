@@ -1,7 +1,7 @@
 const offerController = require("../src/controllers/offer.controller");
 const postController = require("../src/controllers/post.controller");
 const activityController = require("../src/controllers/activity.controller");
-const { sequelize, User, Post, Activity, Offer } = require("../src/models");
+const { sequelize, User, Post, Activity, Offer, OfferMessage } = require("../src/models");
 
 jest.mock("../src/database/db", () => {
     const { Sequelize } = require("sequelize");
@@ -61,6 +61,7 @@ describe("Ofertas de trueque", () => {
     });
 
     beforeEach(async () => {
+        await OfferMessage.destroy({ where: {} });
         await Offer.destroy({ where: {} });
         await Activity.destroy({ where: {} });
         await Post.destroy({ where: {} });
@@ -228,5 +229,71 @@ describe("Ofertas de trueque", () => {
 
         const anaHistory = await historyOf(ana);
         expect(anaHistory.map((a) => a.type)).toContain("contraoferta_recibida");
+    });
+
+    // Hilo de negociación de una oferta como "user"
+    async function getThread(user, offer) {
+        const res = buildRes();
+        await offerController.thread({ user: { id: user.id }, params: { id: offer.id } }, res);
+        return res.json.mock.calls[0][0];
+    }
+
+    test("11. el hilo conserva la oferta y la contraoferta y lo ven ambas partes", async () => {
+        const offer = await sendOffer(ana, post, { message: "Te doy mis apuntes" });
+        await answer("counter", owner, offer, { message: "Agrega un cuaderno" });
+
+        for (const user of [ana, owner]) {
+            const { messages } = await getThread(user, offer);
+            expect(messages.map((m) => [m.kind, m.text])).toEqual([
+                ["oferta", "Te doy mis apuntes"],
+                ["contraoferta", "Agrega un cuaderno"],
+            ]);
+        }
+    });
+
+    test("12. un tercero no puede ver el hilo de la negociación", async () => {
+        const offer = await sendOffer(ana, post, { message: "mi oferta" });
+
+        await expect(getThread(luis, offer)).rejects.toMatchObject({ status: 403 });
+    });
+
+    test("13. quien ofertó responde a la contraoferta y la oferta vuelve a pendiente", async () => {
+        const offer = await sendOffer(ana, post, { message: "mi oferta" });
+        await answer("counter", owner, offer, { message: "Agrega un cuaderno" });
+
+        await answer("reply", ana, offer, { message: "Listo, agrego el cuaderno" });
+
+        expect((await Offer.findByPk(offer.id)).status).toBe("pendiente");
+        const { messages } = await getThread(owner, offer);
+        expect(messages.map((m) => m.kind)).toEqual(["oferta", "contraoferta", "respuesta"]);
+        expect(messages[2].text).toBe("Listo, agrego el cuaderno");
+    });
+
+    test("14. solo se puede responder a una contraoferta y solo quien ofertó", async () => {
+        const offer = await sendOffer(ana, post, { message: "mi oferta" });
+
+        // Aún no hay contraoferta
+        await expect(answer("reply", ana, offer, { message: "hola" })).rejects.toMatchObject({ status: 400 });
+
+        await answer("counter", owner, offer, { message: "Agrega un cuaderno" });
+
+        // El dueño no puede responder su propia contraoferta
+        await expect(answer("reply", owner, offer, { message: "hola" })).rejects.toMatchObject({ status: 403 });
+        // Mensaje vacío
+        await expect(answer("reply", ana, offer, { message: "  " })).rejects.toMatchObject({ status: 400 });
+    });
+
+    test("15. quien ofertó ve sus ofertas con la publicación y su estado", async () => {
+        const offer = await sendOffer(ana, post, { message: "mi oferta" });
+        await answer("counter", owner, offer, { message: "Agrega un cuaderno" });
+
+        const res = buildRes();
+        await offerController.mine({ user: { id: ana.id } }, res);
+        const { offers } = res.json.mock.calls[0][0];
+
+        expect(offers).toHaveLength(1);
+        expect(offers[0].status).toBe("contraoferta");
+        expect(offers[0].targetPost.title).toBe("Calculadora Casio");
+        expect(offers[0].targetPost.owner.name).toBe("Dueño Demo");
     });
 });

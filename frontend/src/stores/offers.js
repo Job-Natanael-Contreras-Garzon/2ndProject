@@ -82,5 +82,38 @@ export const useOffersStore = defineStore("offers", () => {
         );
     }
 
-    return { sendOffer, fetchOffers, acceptOffer, rejectOffer, counterOffer };
+    // Ofertas que envié yo (con la publicación y su dueño)
+    async function fetchMyOffers() {
+        const data = await call("/offers/mine", { method: "GET" }, "Error al cargar tus ofertas");
+        return data.offers || [];
+    }
+
+    // Hilo de negociación de una oferta: { offer, messages }
+    function fetchThread(offerId) {
+        return call(
+            `/offers/${offerId}/thread`,
+            { method: "GET" },
+            "Error al cargar la negociación",
+        );
+    }
+
+    // Quien ofertó responde a la contraoferta del dueño
+    function replyOffer(offerId, message) {
+        return call(
+            `/offers/${offerId}/reply`,
+            { method: "POST", body: JSON.stringify({ message }) },
+            "Error al enviar la respuesta",
+        );
+    }
+
+    return {
+        sendOffer,
+        fetchOffers,
+        acceptOffer,
+        rejectOffer,
+        counterOffer,
+        fetchMyOffers,
+        fetchThread,
+        replyOffer,
+    };
 });

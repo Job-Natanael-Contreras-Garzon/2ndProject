@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 require("./config");
-const { sequelize, User, Post, Activity, Offer } = require("../models");
+const { sequelize, User, Post, Activity, Offer, OfferMessage } = require("../models");
 
 const users = [
     { name: "Martita Becerra", email: "martita@truequeu.com" },
@@ -118,11 +118,18 @@ async function run() {
 
         console.log("Insertando ofertas semilla...");
         for (const data of offers) {
-            await Offer.create({
+            const offer = await Offer.create({
                 targetPostId: createdPosts[data.target].id,
                 offeredPostId: data.offered ? createdPosts[data.offered].id : null,
                 proposerId: createdUsers[data.proposer].id,
                 message: data.message,
+                createdAt: new Date(data.createdAt),
+            });
+            await OfferMessage.create({
+                offerId: offer.id,
+                senderId: createdUsers[data.proposer].id,
+                kind: "oferta",
+                text: data.message,
                 createdAt: new Date(data.createdAt),
             });
         }

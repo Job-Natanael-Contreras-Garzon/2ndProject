@@ -3,6 +3,7 @@ const User = require("./User");
 const Post = require("./Post");
 const Activity = require("./Activity");
 const Offer = require("./Offer");
+const OfferMessage = require("./OfferMessage");
 
 User.hasMany(Post, { foreignKey: "userId" });
 Post.belongsTo(User, { foreignKey: "userId", as: "owner" });
@@ -30,4 +31,9 @@ Offer.belongsTo(User, {
     onDelete: "CASCADE",
 });
 
-module.exports = { sequelize, User, Post, Activity, Offer };
+// Hilo de mensajes de una oferta: se elimina junto con la oferta
+Offer.hasMany(OfferMessage, { foreignKey: { name: "offerId", allowNull: false }, as: "messages", onDelete: "CASCADE" });
+OfferMessage.belongsTo(Offer, { foreignKey: { name: "offerId", allowNull: false }, as: "offer", onDelete: "CASCADE" });
+OfferMessage.belongsTo(User, { foreignKey: { name: "senderId", allowNull: true }, as: "sender", onDelete: "SET NULL" });
+
+module.exports = { sequelize, User, Post, Activity, Offer, OfferMessage };
