@@ -46,6 +46,16 @@ const filters = computed(() => ({
     state: route.query.state || "",
 }));
 
+// Vista: "todas" las publicaciones o "mis-ofertas" (solo donde envié una oferta)
+const vista = computed(() => (route.query.vista === "mis-ofertas" ? "mis-ofertas" : "todas"));
+
+function cambiarVista(valor) {
+    const query = { ...route.query };
+    if (valor === "mis-ofertas") query.vista = valor;
+    else delete query.vista;
+    router.push({ name: "dashboard", query });
+}
+
 const chips = computed(() => {
     const list = [];
     if (filters.value.q) {
@@ -80,7 +90,7 @@ const extraFiltersCount = computed(() => {
 });
 
 const countText = computed(() => {
-    const n = explorePosts.value.length;
+    const n = publicaciones.value.length;
     if (chips.value.length > 0) {
         return n === 1 ? "1 resultado" : `${n} resultados`;
     }
@@ -92,6 +102,7 @@ function applyFilters(values) {
     for (const [key, value] of Object.entries(values)) {
         if (value) query[key] = value;
     }
+    if (vista.value === "mis-ofertas") query.vista = "mis-ofertas";
     router.push({ name: "dashboard", query });
 }
 
@@ -140,6 +151,21 @@ const offerByPost = computed(() => {
     }
     return map;
 });
+
+// En "Mis ofertas" solo se muestran las publicaciones donde envié una oferta
+const publicaciones = computed(() =>
+    vista.value === "mis-ofertas"
+        ? explorePosts.value.filter((post) => offerByPost.value[post.id])
+        : explorePosts.value,
+);
+
+const estadoOferta = {
+    pendiente: "Pendiente de respuesta",
+    contraoferta: "Te enviaron una contraoferta",
+    aceptada: "Aceptada",
+    rechazada: "Rechazada",
+    cancelada: "Cancelada",
+};
 
 function hasActiveOffer(post) {
     const status = offerByPost.value[post.id]?.status;
@@ -272,7 +298,18 @@ watch(
             </ol>
         </details>
 
-        <form @submit.prevent="search" class="card bg-base-100 shadow-sm border border-base-300 mt-6 p-4 gap-3">
+        <div role="tablist" class="tabs tabs-box mt-6">
+            <button type="button" role="tab" @click="cambiarVista('todas')" class="tab h-12 flex-1 text-base"
+                :class="{ 'tab-active': vista === 'todas' }" :aria-selected="vista === 'todas'">
+                Todas las publicaciones
+            </button>
+            <button type="button" role="tab" @click="cambiarVista('mis-ofertas')" class="tab h-12 flex-1 text-base"
+                :class="{ 'tab-active': vista === 'mis-ofertas' }" :aria-selected="vista === 'mis-ofertas'">
+                Mis ofertas
+            </button>
+        </div>
+
+        <form @submit.prevent="search" class="card bg-base-100 shadow-sm border border-base-300 mt-4 p-4 gap-3">
             <div class="flex flex-col lg:flex-row gap-3">
                 <input v-model="q" type="search" placeholder="Buscar por título"
                     class="input input-bordered w-full lg:flex-1" />
@@ -373,8 +410,8 @@ watch(
         <template v-else>
             <p class="text-sm text-base-content/70 mt-6 mb-3">{{ countText }}</p>
 
-            <div v-if="explorePosts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div v-for="post in explorePosts" :key="post.id"
+            <div v-if="publicaciones.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div v-for="post in publicaciones" :key="post.id"
                     class="card bg-base-100 shadow-sm border border-base-300 p-4 flex flex-col gap-2">
                     <h2 class="font-bold text-lg">{{ post.title }}</h2>
                     <p class="text-sm text-base-content/60">de {{ post.owner?.name }}</p>
@@ -389,6 +426,9 @@ watch(
                     <div>
                         <StateBadge :state="post.state" />
                     </div>
+                    <p v-if="vista === 'mis-ofertas'" class="text-sm font-semibold">
+                        Tu oferta: {{ estadoOferta[offerByPost[post.id].status] || offerByPost[post.id].status }}
+                    </p>
                     <div v-if="offerByPost[post.id]" class="flex flex-wrap items-center gap-2">
                         <span v-if="offerByPost[post.id].status === 'contraoferta'"
                             class="badge badge-warning badge-sm">Nueva contraoferta</span>
@@ -430,6 +470,13 @@ watch(
                     <p class="font-semibold mt-3">No hay publicaciones que coincidan con los filtros</p>
                     <p class="text-sm text-base-content/60 mt-1">Prueba con otra palabra o quita algunos filtros.</p>
                     <button type="button" @click="clearFilters" class="btn btn-primary mt-4">Limpiar filtros</button>
+                </template>
+                <template v-else-if="vista === 'mis-ofertas'">
+                    <p class="font-semibold mt-3">Todavía no enviaste ofertas</p>
+                    <p class="text-sm text-base-content/60 mt-1">Cuando hagas una oferta, podrás ver aquí su estado.</p>
+                    <button type="button" @click="cambiarVista('todas')" class="btn btn-primary mt-4">
+                        Ver todas las publicaciones
+                    </button>
                 </template>
                 <p v-else class="font-semibold mt-3">Todavía no hay publicaciones de otros estudiantes.</p>
             </div>
