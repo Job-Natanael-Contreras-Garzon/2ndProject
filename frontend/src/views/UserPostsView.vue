@@ -11,6 +11,7 @@ import StateBadge from "@/components/StateBadge.vue";
 import PostForm from "@/components/PostForm.vue";
 import OfferList from "@/components/OfferList.vue";
 import CancelExchangeForm from "@/components/CancelExchangeForm.vue";
+import { track } from "@/utils/analitica";
 
 const authStore = useAuthStore();
 const postsStore = usePostsStore();
@@ -31,6 +32,7 @@ const actionError = ref("");
 function openCreateModal() {
     selectedPost.value = null;
     isModalOpen.value = true;
+    track("publicacion_iniciada", { origen: "mis_publicaciones" });
 }
 
 function openEditModal(post) {

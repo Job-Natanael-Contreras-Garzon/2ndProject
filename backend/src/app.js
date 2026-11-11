@@ -13,6 +13,7 @@ app.use("/api", require("./routes/auth.routes"));
 app.use("/api", require("./routes/post.routes"));
 app.use("/api", require("./routes/offer.routes"));
 app.use("/api", require("./routes/activity.routes"));
+app.use("/api", require("./routes/analytics.routes"));
 
 app.use(errorHandler);
 
@@ -28,4 +29,8 @@ async function start() {
     }
 }
 
-start();
+if (process.env.NODE_ENV !== "test") {
+    start();
+}
+
+module.exports = app;

@@ -8,6 +8,7 @@ import RecoverView from "@/views/RecoverView.vue";
 import UserPostsView from "@/views/UserPostsView.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import HistoryView from "@/views/HistoryView.vue";
+import AnalyticsView from "@/views/AnalyticsView.vue";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
 
@@ -31,6 +32,13 @@ const router = createRouter({
       path: "/recover",
       name: "recover",
       component: RecoverView,
+    },
+
+    {
+      path: "/analitics",
+      alias: ["/analitica", "/analytics"],
+      name: "analytics",
+      component: AnalyticsView,
     },
 
     {

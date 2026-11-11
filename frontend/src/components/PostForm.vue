@@ -1,6 +1,7 @@
 <script setup>
 import { ref, watch } from "vue";
 import { usePostsStore } from "@/stores/posts";
+import { track } from "@/utils/analitica";
 
 const props = defineProps({
     post: {
@@ -45,7 +46,13 @@ async function handleSubmit() {
         if (props.post?.id) {
             await postsStore.updatePost(props.post.id, form.value);
         } else {
+            const categoria = form.value.category;
+            const condicion = form.value.condition;
             await postsStore.createPost(form.value);
+            await track("publicacion_guardada", {
+                categoria,
+                condicion,
+            });
         }
         emit("saved");
     } catch (err) {
