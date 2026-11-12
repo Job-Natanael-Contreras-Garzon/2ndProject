@@ -41,6 +41,11 @@ async function logout() {
                         </RouterLink>
                     </li>
                     <li>
+                        <RouterLink :to="{ name: 'profile' }" exact-active-class="active font-medium">
+                            Perfil
+                        </RouterLink>
+                    </li>
+                    <li>
                         <RouterLink :to="{ name: 'analytics' }" exact-active-class="active font-medium">
                             Analítica
                         </RouterLink>

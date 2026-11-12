@@ -5,6 +5,7 @@ const Activity = require("./Activity");
 const Offer = require("./Offer");
 const OfferMessage = require("./OfferMessage");
 const Evento = require("./Evento");
+const Calificacion = require("./Calificacion");
 
 User.hasMany(Post, { foreignKey: "userId" });
 Post.belongsTo(User, { foreignKey: "userId", as: "owner" });
@@ -37,4 +38,4 @@ Offer.hasMany(OfferMessage, { foreignKey: { name: "offerId", allowNull: false },
 OfferMessage.belongsTo(Offer, { foreignKey: { name: "offerId", allowNull: false }, as: "offer", onDelete: "CASCADE" });
 OfferMessage.belongsTo(User, { foreignKey: { name: "senderId", allowNull: true }, as: "sender", onDelete: "SET NULL" });
 
-module.exports = { sequelize, User, Post, Activity, Offer, OfferMessage, Evento };
+module.exports = { sequelize, User, Post, Activity, Offer, OfferMessage, Evento, Calificacion };

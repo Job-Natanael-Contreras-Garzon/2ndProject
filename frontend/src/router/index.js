@@ -8,6 +8,7 @@ import RecoverView from "@/views/RecoverView.vue";
 import UserPostsView from "@/views/UserPostsView.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import HistoryView from "@/views/HistoryView.vue";
+import ProfileView from "@/views/ProfileView.vue";
 import AnalyticsView from "@/views/AnalyticsView.vue";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
@@ -66,6 +67,12 @@ const router = createRouter({
           path: "history",
           name: "history",
           component: HistoryView,
+        },
+
+        {
+          path: "profile",
+          name: "profile",
+          component: ProfileView,
         },
       ],
     },

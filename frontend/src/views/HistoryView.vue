@@ -4,12 +4,14 @@ import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useActivityStore } from "@/stores/activity";
 import { useAuthStore } from "@/stores/auth";
+import { track } from "@/utils/analitica";
 
 import PageTitle from "@/components/PageTitle.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import Modal from "@/components/Modal.vue";
 import OfferThread from "@/components/OfferThread.vue";
 
+const API_URL = import.meta.env.VITE_API_URL;
 const route = useRoute();
 const router = useRouter();
 const activityStore = useActivityStore();
@@ -36,6 +38,13 @@ const showDetail = ref(false);
 const detail = ref(null);
 const detailLoading = ref(false);
 const detailError = ref(null);
+
+// Calificación del intercambio completado
+const puntaje = ref(5);
+const comentario = ref("");
+const enviando = ref(false);
+const mensajeCalificacion = ref("");
+const errorCalificacion = ref("");
 
 const type = computed(() => {
     const value = route.query.type;
@@ -123,12 +132,46 @@ async function openDetail(activity) {
     detailError.value = null;
     detailLoading.value = true;
     showDetail.value = true;
+    puntaje.value = 5;
+    comentario.value = "";
+    mensajeCalificacion.value = "";
+    errorCalificacion.value = "";
     try {
         detail.value = await activityStore.fetchActivity(activity.id);
+        if (detail.value.type === "intercambio_completado") {
+            track("calificacion_iniciada");
+        }
     } catch (err) {
         detailError.value = err.message;
     } finally {
         detailLoading.value = false;
+    }
+}
+
+// Cada parte califica a la otra una sola vez (el backend rechaza una segunda calificación)
+async function enviarCalificacion() {
+    mensajeCalificacion.value = "";
+    errorCalificacion.value = "";
+    enviando.value = true;
+    try {
+        const res = await fetch(`${API_URL}/posts/${detail.value.postId}/calificacion`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${authStore.token}`,
+            },
+            body: JSON.stringify({ puntaje: Number(puntaje.value), comentario: comentario.value }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.error || "No se pudo enviar la calificación.");
+        }
+        mensajeCalificacion.value = "Calificación enviada. ¡Gracias!";
+        track("calificacion_enviada", { puntaje: Number(puntaje.value) });
+    } catch (err) {
+        errorCalificacion.value = err.message;
+    } finally {
+        enviando.value = false;
     }
 }
 
@@ -260,6 +303,22 @@ watch(type, loadActivities, { immediate: true });
                 <p v-if="!detail.Post" class="text-sm text-base-content/60">
                     Esta publicación ya no está disponible.
                 </p>
+
+                <div v-if="detail.type === 'intercambio_completado' && detail.postId"
+                    class="border-t border-base-300 pt-3">
+                    <p class="font-semibold text-sm mb-2">Calificar a {{ detail.otherUserName }}</p>
+                    <div class="flex flex-col gap-2">
+                        <select v-model="puntaje" class="select select-bordered w-full" aria-label="Puntaje">
+                            <option v-for="n in 5" :key="n" :value="n">{{ n }} {{ n === 1 ? "estrella" : "estrellas" }}</option>
+                        </select>
+                        <textarea v-model="comentario" class="textarea textarea-bordered w-full"
+                            placeholder="Comentario (opcional)"></textarea>
+                        <button type="button" @click="enviarCalificacion" :disabled="enviando"
+                            class="btn btn-primary">Enviar calificación</button>
+                        <p v-if="mensajeCalificacion" class="text-success text-sm" role="status">{{ mensajeCalificacion }}</p>
+                        <p v-if="errorCalificacion" class="text-error text-sm" role="alert">{{ errorCalificacion }}</p>
+                    </div>
+                </div>
 
                 <div v-if="detail.offerId" class="border-t border-base-300 pt-3">
                     <p class="font-semibold text-sm mb-2">Negociación</p>

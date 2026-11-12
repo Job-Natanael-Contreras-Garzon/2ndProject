@@ -1,4 +1,6 @@
 const API_URL = import.meta.env?.VITE_API_URL || "http://localhost:3000/api";
+// ID de Google Analytics 4 (formato G-XXXXXXXXXX). Si no está en el .env, GA no se activa.
+const GA_ID = import.meta.env?.VITE_GA_ID;
 
 // Lista de campos prohibidos para asegurar que jamás se capture PII
 const PII_FIELDS = new Set([
@@ -21,6 +23,26 @@ function sanitizeProps(rawProps) {
 }
 
 /**
+ * Carga Google Analytics 4 una sola vez. Se llama al iniciar la app (main.js).
+ * Los eventos se ven en Google Analytics > Informes > Tiempo real.
+ */
+export function iniciarGoogleAnalytics() {
+    if (!GA_ID || typeof document === "undefined" || window.gtag) return;
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    document.head.appendChild(script);
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () {
+        window.dataLayer.push(arguments);
+    };
+    window.gtag("js", new Date());
+    window.gtag("config", GA_ID);
+}
+
+/**
  * Función cliente para el rastreo de eventos de producto.
  * Convención: objeto + accion_en_pasado (minúsculas, snake_case).
  * NUNCA debe incluir información personal identificable (PII).
@@ -39,6 +61,11 @@ export async function track(evento, props = {}) {
 
     // Registro en consola para trazabilidad según especificación
     console.log("[evento]", registro);
+
+    // Mismo evento hacia Google Analytics 4 (solo si está activado)
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+        window.gtag("event", evento, cleanProps);
+    }
 
     try {
         await fetch(`${API_URL}/eventos`, {

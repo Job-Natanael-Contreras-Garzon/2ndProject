@@ -76,6 +76,18 @@ describe("Módulo de Analítica y Rastreo de Eventos", () => {
                 condicion: "usado",
             });
         });
+
+        it("envía el mismo evento a Google Analytics (gtag) sin datos personales", async () => {
+            vi.spyOn(console, "log").mockImplementation(() => {});
+            vi.spyOn(globalThis, "fetch").mockResolvedValue({ ok: true, json: async () => ({}) });
+            window.gtag = vi.fn();
+
+            await track("publicacion_guardada", { categoria: "ropa", email: "juan@correo.com" });
+
+            expect(window.gtag).toHaveBeenCalledTimes(1);
+            expect(window.gtag).toHaveBeenCalledWith("event", "publicacion_guardada", { categoria: "ropa" });
+            delete window.gtag;
+        });
     });
 
     describe("Evento 1: publicacion_iniciada", () => {

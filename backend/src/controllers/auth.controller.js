@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { Op } = require("sequelize");
-const { User } = require("../models");
+const { User, Calificacion } = require("../models");
 const { HttpError } = require("../middleware/errorHandler");
 const { jwtSecret, jwtDuration, resetTokenMinutes } = require("../database/config");
 
@@ -100,7 +100,12 @@ exports.resetPassword = async (req, res) => {
     res.json({ message: "Contraseña cambiada exitosamente" });
 };
 
-exports.profile = (req, res) => {
+// El perfil muestra el promedio y la cantidad de calificaciones que recibió la persona
+exports.profile = async (req, res) => {
     const { id, name, email } = req.user;
-    res.json({ user: { id, name, email } });
+    const recibidas = await Calificacion.findAll({ where: { calificadoId: id } });
+    const cantidad = recibidas.length;
+    const suma = recibidas.reduce((total, c) => total + c.puntaje, 0);
+    const promedio = cantidad > 0 ? Number((suma / cantidad).toFixed(1)) : 0;
+    res.json({ user: { id, name, email, calificaciones: { promedio, cantidad } } });
 };
