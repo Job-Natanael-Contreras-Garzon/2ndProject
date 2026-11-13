@@ -99,8 +99,8 @@ const shownError = computed(() => error.value || props.serverError);
         </div>
 
         <div class="modal-action mt-2">
-            <button type="button" @click="emit('cancel')" :disabled="submitting" class="btn btn-ghost">Volver</button>
-            <button type="submit" :disabled="submitting" class="btn btn-error text-white">Cancelar intercambio</button>
+            <button type="button" @click="emit('cancel')" :disabled="submitting" class="btn btn-outline">Volver</button>
+            <button type="submit" :disabled="submitting" class="btn btn-outline">Cancelar intercambio</button>
         </div>
     </form>
 </template>
