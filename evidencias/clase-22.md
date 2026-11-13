@@ -9,6 +9,8 @@ Modalidad: con IA
 - **Por qué es un patrón oscuro:** En el formulario de confirmación, la acción segura (`Volver`) tenía `btn btn-ghost` (texto plano de bajo contraste sin borde), mientras que la acción destructiva e irreversible (`Cancelar intercambio`) tenía `btn btn-error text-white` (botón sólido de alto contraste). Esto rompe la prueba de simetría visual y destaca la acción peligrosa frente a la salida segura.
 
 ## 2. Antes
+![Antes - Modal cancelar intercambio](clase-22-antes.png)
+
 ```html
 <!-- frontend/src/components/CancelExchangeForm.vue:101-104 -->
 <div class="modal-action mt-2">
@@ -18,6 +20,8 @@ Modalidad: con IA
 ```
 
 ## 3. Después
+![Después - Modal cancelar intercambio](clase-22-despues.png)
+
 ```html
 <!-- frontend/src/components/CancelExchangeForm.vue:101-104 -->
 <div class="modal-action mt-2">
