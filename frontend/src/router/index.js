@@ -9,6 +9,7 @@ import UserPostsView from "@/views/UserPostsView.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import HistoryView from "@/views/HistoryView.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import MisDatosView from "@/views/MisDatosView.vue";
 import AnalyticsView from "@/views/AnalyticsView.vue";
 
 import AuthLayout from "@/layouts/AuthLayout.vue";
@@ -73,6 +74,12 @@ const router = createRouter({
           path: "profile",
           name: "profile",
           component: ProfileView,
+        },
+
+        {
+          path: "mis-datos",
+          name: "mis-datos",
+          component: MisDatosView,
         },
       ],
     },

@@ -46,6 +46,11 @@ async function logout() {
                         </RouterLink>
                     </li>
                     <li>
+                        <RouterLink :to="{ name: 'mis-datos' }" exact-active-class="active font-medium">
+                            Mis datos
+                        </RouterLink>
+                    </li>
+                    <li>
                         <RouterLink :to="{ name: 'analytics' }" exact-active-class="active font-medium">
                             Analítica
                         </RouterLink>

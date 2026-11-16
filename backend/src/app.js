@@ -14,6 +14,7 @@ app.use("/api", require("./routes/post.routes"));
 app.use("/api", require("./routes/offer.routes"));
 app.use("/api", require("./routes/activity.routes"));
 app.use("/api", require("./routes/calificacion.routes"));
+app.use("/api", require("./routes/cuenta.routes"));
 app.use("/api", require("./routes/analytics.routes"));
 
 app.use(errorHandler);
