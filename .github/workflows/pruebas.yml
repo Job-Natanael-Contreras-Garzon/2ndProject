@@ -1,0 +1,52 @@
+name: pruebas
+
+on: [push, pull_request]
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Valores solo para pruebas (no son secretos reales). El .env no se sube al repo.
+      PORT: 3000
+      JWT_SECRET: clave-solo-para-pruebas-en-ci
+      VITE_API_URL: http://localhost:3000/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+
+      - name: Revisión de código (ESLint)
+        run: pnpm lint
+
+      - name: Pruebas unitarias (backend + frontend, con coverage)
+        run: pnpm test:unit
+
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Levantar backend (con semilla) y frontend para E2E
+        run: |
+          pnpm --dir backend seed
+          pnpm --dir backend exec node src/app.js > backend.log 2>&1 &
+          pnpm --dir frontend exec vite --port 5173 > frontend.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:5173 > /dev/null && curl -s http://localhost:3000 > /dev/null && exit 0
+            sleep 1
+          done
+          echo "Los servidores no levantaron"; cat backend.log frontend.log; exit 1
+
+      - name: Pruebas E2E (Playwright, chromium)
+        run: pnpm test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes
+          path: |
+            playwright-report
+            backend/coverage
+            frontend/coverage
+            backend.log
+            frontend.log
