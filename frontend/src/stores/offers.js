@@ -1,49 +1,20 @@
 import { defineStore } from "pinia";
 import { useAuthStore } from "@/stores/auth";
-
-const API_URL = import.meta.env.VITE_API_URL;
-
-const NETWORK_ERROR_MESSAGE =
-    "No hay conexión con el servidor. Revisa tu conexión e intenta de nuevo en unos segundos.";
-
-async function request(url, options) {
-    try {
-        return await fetch(url, options);
-    } catch {
-        const err = new Error(NETWORK_ERROR_MESSAGE);
-        err.network = true;
-        throw err;
-    }
-}
+import { pedirApi } from "@/api/client";
 
 export const useOffersStore = defineStore("offers", () => {
     const auth = useAuthStore();
 
-    function getHeaders() {
-        return {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${auth.token}`,
-        };
-    }
-
-    // Hace la petición y devuelve los datos; si el servidor responde con error, lo lanza
-    async function call(path, options, defaultMessage) {
-        const res = await request(`${API_URL}${path}`, {
-            ...options,
-            headers: getHeaders(),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.message || data.error || defaultMessage);
-        }
-        return data;
+    // Hace la petición con la sesión y devuelve los datos; si el servidor responde con error, lo lanza
+    function call(path, options = {}, mensajeError) {
+        return pedirApi(path, { ...options, token: auth.token, mensajeError });
     }
 
     // Enviar una oferta por una publicación (offerData: { offeredPostId, message })
     function sendOffer(postId, offerData) {
         return call(
             `/posts/${postId}/offers`,
-            { method: "POST", body: JSON.stringify(offerData) },
+            { method: "POST", body: offerData },
             "Error al enviar la oferta",
         );
     }
@@ -77,7 +48,7 @@ export const useOffersStore = defineStore("offers", () => {
     function counterOffer(id, counterData) {
         return call(
             `/offers/${id}/counter`,
-            { method: "PATCH", body: JSON.stringify(counterData) },
+            { method: "PATCH", body: counterData },
             "Error al enviar la contraoferta",
         );
     }
@@ -101,7 +72,7 @@ export const useOffersStore = defineStore("offers", () => {
     function replyOffer(offerId, message) {
         return call(
             `/offers/${offerId}/reply`,
-            { method: "POST", body: JSON.stringify({ message }) },
+            { method: "POST", body: { message } },
             "Error al enviar la respuesta",
         );
     }

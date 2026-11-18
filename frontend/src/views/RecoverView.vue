@@ -1,6 +1,8 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref } from "vue";
 import { RouterLink } from "vue-router";
+import { API_URL } from "@/api/client";
 
 const email = ref("");
 const error = ref("");
@@ -13,7 +15,7 @@ async function handleRecover() {
     loading.value = true;
 
     try {
-        const response = await fetch("http://localhost:3000/api/forgot-password", {
+        const response = await fetch(`${API_URL}/forgot-password`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email: email.value }),
@@ -40,8 +42,8 @@ async function handleRecover() {
             <div class="card-body">
 
                 <div class="text-center mb-4">
-                    <h1 class="text-3xl font-extrabold text-primary">Trueque U</h1>
-                    <h2 class="text-xl font-semibold mt-1">Recuperar contraseña</h2>
+                    <h1 class="texto-titulo-pagina">Trueque U</h1>
+                    <h2 class="texto-titulo-seccion mt-1">Recuperar contraseña</h2>
                     <p class="text-xs mt-1">
                         Ingresa tu correo y te enviaremos las instrucciones de recuperación.
                     </p>
@@ -71,10 +73,10 @@ async function handleRecover() {
                     </div>
 
                     <div class="form-control mt-6">
-                        <button type="submit" class="btn btn-primary w-full shadow-md" :disabled="loading">
+                        <BaseButton type="submit" :disabled="loading" variant="accion" class="w-full shadow-md">
                             <span v-if="loading" class="loading loading-spinner loading-sm"></span>
                             {{ loading ? "Enviando..." : "Recuperar" }}
-                        </button>
+                        </BaseButton>
                     </div>
                 </form>
 

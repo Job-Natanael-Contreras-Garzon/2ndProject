@@ -1,17 +1,18 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useActivityStore } from "@/stores/activity";
 import { useAuthStore } from "@/stores/auth";
 import { track } from "@/utils/analitica";
+import { pedirApi } from "@/api/client";
 
 import PageTitle from "@/components/PageTitle.vue";
 import StateBadge from "@/components/StateBadge.vue";
 import Modal from "@/components/Modal.vue";
 import OfferThread from "@/components/OfferThread.vue";
 
-const API_URL = import.meta.env.VITE_API_URL;
 const route = useRoute();
 const router = useRouter();
 const activityStore = useActivityStore();
@@ -154,18 +155,12 @@ async function enviarCalificacion() {
     errorCalificacion.value = "";
     enviando.value = true;
     try {
-        const res = await fetch(`${API_URL}/posts/${detail.value.postId}/calificacion`, {
+        await pedirApi(`/posts/${detail.value.postId}/calificacion`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${authStore.token}`,
-            },
-            body: JSON.stringify({ puntaje: Number(puntaje.value), comentario: comentario.value }),
+            token: authStore.token,
+            body: { puntaje: Number(puntaje.value), comentario: comentario.value },
+            mensajeError: "No se pudo enviar la calificación.",
         });
-        const data = await res.json();
-        if (!res.ok) {
-            throw new Error(data.error || "No se pudo enviar la calificación.");
-        }
         mensajeCalificacion.value = "Calificación enviada. ¡Gracias!";
         track("calificacion_enviada", { puntaje: Number(puntaje.value) });
     } catch (err) {
@@ -196,7 +191,7 @@ watch(type, loadActivities, { immediate: true });
 
         <div v-else-if="error" class="alert alert-error shadow-sm mt-6 flex justify-between">
             <span>{{ error }}</span>
-            <button type="button" @click="loadActivities" class="btn btn-sm">Reintentar</button>
+            <BaseButton type="button" @click="loadActivities" size="sm">Reintentar</BaseButton>
         </div>
 
         <template v-else>
@@ -243,7 +238,7 @@ watch(type, loadActivities, { immediate: true });
                             <p v-if="activity.reason" class="text-sm mt-1">
                                 <span class="font-medium">Motivo:</span> {{ activity.reason }}
                             </p>
-                            <p class="text-sm text-base-content/60 mt-1">{{ formatDate(activity.createdAt) }}</p>
+                            <p class="texto-secundario mt-1">{{ formatDate(activity.createdAt) }}</p>
                         </div>
                     </button>
                 </li>
@@ -257,14 +252,14 @@ watch(type, loadActivities, { immediate: true });
                 </svg>
                 <template v-if="type === ''">
                     <p class="font-semibold mt-3">Todavía no tienes actividad</p>
-                    <p class="text-sm text-base-content/60 mt-1">
+                    <p class="texto-secundario mt-1">
                         Cuando envíes una oferta, reserves o completes un intercambio, aparecerá aquí.
                     </p>
-                    <RouterLink :to="{ name: 'dashboard' }" class="btn btn-primary mt-4">Ir a Explorar</RouterLink>
+                    <BaseButton :to="{ name: 'dashboard' }" as="RouterLink" variant="accion" class="mt-4">Ir a Explorar</BaseButton>
                 </template>
                 <template v-else>
                     <p class="font-semibold mt-3">{{ emptyText }}</p>
-                    <button type="button" @click="selectTab('')" class="btn btn-primary mt-4">Ver todo el historial</button>
+                    <BaseButton type="button" @click="selectTab('')" variant="accion" class="mt-4">Ver todo el historial</BaseButton>
                 </template>
             </div>
         </template>
@@ -300,7 +295,7 @@ watch(type, loadActivities, { immediate: true });
                         <dd>{{ conditionLabels[detail.Post.condition] || detail.Post.condition }}</dd>
                     </template>
                 </dl>
-                <p v-if="!detail.Post" class="text-sm text-base-content/60">
+                <p v-if="!detail.Post" class="texto-secundario">
                     Esta publicación ya no está disponible.
                 </p>
 
@@ -313,8 +308,7 @@ watch(type, loadActivities, { immediate: true });
                         </select>
                         <textarea v-model="comentario" class="textarea textarea-bordered w-full"
                             placeholder="Comentario (opcional)"></textarea>
-                        <button type="button" @click="enviarCalificacion" :disabled="enviando"
-                            class="btn btn-primary">Enviar calificación</button>
+                        <BaseButton type="button" @click="enviarCalificacion" :disabled="enviando" variant="accion">Enviar calificación</BaseButton>
                         <p v-if="mensajeCalificacion" class="text-success text-sm" role="status">{{ mensajeCalificacion }}</p>
                         <p v-if="errorCalificacion" class="text-error text-sm" role="alert">{{ errorCalificacion }}</p>
                     </div>
@@ -327,7 +321,7 @@ watch(type, loadActivities, { immediate: true });
             </div>
 
             <div class="modal-action">
-                <button type="button" @click="showDetail = false" class="btn btn-primary btn-lg w-full">Cerrar</button>
+                <BaseButton type="button" @click="showDetail = false" variant="accion" size="lg" class="w-full">Cerrar</BaseButton>
             </div>
         </Modal>
     </div>

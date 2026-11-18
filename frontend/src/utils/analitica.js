@@ -1,4 +1,5 @@
-const API_URL = import.meta.env?.VITE_API_URL || "http://localhost:3000/api";
+import { API_URL } from "@/api/client";
+
 // ID de Google Analytics 4 (formato G-XXXXXXXXXX). Si no está en el .env, GA no se activa.
 const GA_ID = import.meta.env?.VITE_GA_ID;
 
