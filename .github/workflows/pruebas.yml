@@ -50,3 +50,49 @@ jobs:
             frontend/coverage
             backend.log
             frontend.log
+
+  # Despliegue a Render: solo en push a main y solo si las pruebas pasaron.
+  # Los "deploy hooks" son URLs secretas: se guardan en GitHub > Settings > Secrets and variables > Actions.
+  desplegar:
+    needs: pruebas
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      URL_API: https://twondprojectback.onrender.com
+      URL_WEB: https://twondproject-7n9y.onrender.com
+    steps:
+      - name: Desplegar backend en Render
+        id: api
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_API }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::Falta el secret RENDER_DEPLOY_HOOK_API, no se desplegó el backend."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "desplegado=true" >> "$GITHUB_OUTPUT"
+
+      - name: Desplegar frontend en Render
+        id: web
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_WEB }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::Falta el secret RENDER_DEPLOY_HOOK_WEB, no se desplegó el frontend."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "desplegado=true" >> "$GITHUB_OUTPUT"
+
+      - name: Verificar que la nube responde
+        if: steps.api.outputs.desplegado == 'true' || steps.web.outputs.desplegado == 'true'
+        run: |
+          # El plan gratis de Render tarda en despertar y en terminar el deploy: se reintenta.
+          sleep 60
+          for i in $(seq 1 30); do
+            curl -sf "$URL_API/api/public-info" > /dev/null && curl -sf "$URL_WEB" > /dev/null && exit 0
+            sleep 10
+          done
+          echo "La nube no respondió a tiempo"; exit 1
