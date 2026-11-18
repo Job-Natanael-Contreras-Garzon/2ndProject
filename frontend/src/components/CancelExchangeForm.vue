@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, computed } from "vue";
 
 const props = defineProps({
@@ -68,7 +69,7 @@ const shownError = computed(() => error.value || props.serverError);
 
 <template>
     <form @submit.prevent="submit" class="flex flex-col gap-3" novalidate>
-        <p class="text-sm text-base-content/70">
+        <p class="texto-secundario">
             Vas a cancelar el intercambio de <strong>{{ title }}</strong><template v-if="otherName">
                 con {{ otherName }}</template>. La publicación volverá a estar disponible y el motivo quedará en
             el historial de ambas personas.
@@ -91,7 +92,7 @@ const shownError = computed(() => error.value || props.serverError);
             <textarea v-model="reason" :maxlength="MAX" rows="3" aria-label="Descripción del motivo"
                 placeholder="Ej. No pudimos coincidir en horario o lugar de entrega."
                 class="textarea textarea-bordered w-full text-sm focus:textarea-primary"></textarea>
-            <span class="text-xs text-base-content/60 text-right mt-1">{{ remaining }} caracteres restantes</span>
+            <span class="texto-etiqueta text-right mt-1">{{ remaining }} caracteres restantes</span>
         </label>
 
         <div v-if="shownError" role="alert" class="alert alert-error shadow-sm text-sm py-2 px-3">
@@ -99,8 +100,8 @@ const shownError = computed(() => error.value || props.serverError);
         </div>
 
         <div class="modal-action mt-2">
-            <button type="button" @click="emit('cancel')" :disabled="submitting" class="btn btn-outline">Volver</button>
-            <button type="submit" :disabled="submitting" class="btn btn-outline">Cancelar intercambio</button>
+            <BaseButton type="button" @click="emit('cancel')" :disabled="submitting" variant="neutro">Volver</BaseButton>
+            <BaseButton type="submit" :disabled="submitting" variant="neutro">Cancelar intercambio</BaseButton>
         </div>
     </form>
 </template>

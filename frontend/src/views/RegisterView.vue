@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -38,8 +39,8 @@ async function handleRegister() {
             <div class="card-body">
 
                 <div class="text-center mb-4">
-                    <h1 class="text-3xl font-extrabold text-primary">Trueque U</h1>
-                    <h2 class="text-xl font-semibold mt-1">Crear cuenta</h2>
+                    <h1 class="texto-titulo-pagina">Trueque U</h1>
+                    <h2 class="texto-titulo-seccion mt-1">Crear cuenta</h2>
                 </div>
 
 
@@ -75,10 +76,10 @@ async function handleRegister() {
                     </div>
 
                     <div class="form-control mt-6">
-                        <button type="submit" class="btn btn-primary w-full shadow-md" :disabled="loading">
+                        <BaseButton type="submit" :disabled="loading" variant="accion" class="w-full shadow-md">
                             <span v-if="loading" class="loading loading-spinner loading-sm"></span>
                             {{ loading ? "Registrando..." : "Crear cuenta" }}
-                        </button>
+                        </BaseButton>
                     </div>
                 </form>
 

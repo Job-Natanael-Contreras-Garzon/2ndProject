@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, onMounted } from "vue";
 import { useOffersStore } from "@/stores/offers";
 import OfferThread from "@/components/OfferThread.vue";
@@ -116,7 +117,7 @@ onMounted(loadOffers);
 
 <template>
     <div>
-        <p class="text-sm text-base-content/70 mb-3">
+        <p class="texto-secundario mb-3">
             Ofertas por <strong>{{ post.title }}</strong>
         </p>
 
@@ -128,7 +129,7 @@ onMounted(loadOffers);
             <span class="loading loading-spinner loading-lg text-primary"></span>
         </div>
 
-        <p v-else-if="offers.length === 0 && !error" class="text-sm text-base-content/60 py-4">
+        <p v-else-if="offers.length === 0 && !error" class="texto-secundario py-4">
             Todavía no hay ofertas pendientes para esta publicación.
         </p>
 
@@ -144,20 +145,17 @@ onMounted(loadOffers);
                         {{ conditionLabels[offer.offeredPost.condition] || offer.offeredPost.condition }})
                     </span>
                 </p>
-                <p v-else class="text-sm text-base-content/60">No ofrece un producto, solo un mensaje.</p>
+                <p v-else class="texto-secundario">No ofrece un producto, solo un mensaje.</p>
 
                 <p v-if="offer.message" class="text-sm italic">«{{ offer.message }}»</p>
 
                 <div class="flex flex-wrap gap-2 mt-1">
-                    <button type="button" @click="answer(offer, 'accept')" :disabled="busyId !== null"
-                        class="btn btn-success btn-sm">Aceptar</button>
-                    <button type="button" @click="openCounter(offer)" :disabled="busyId !== null"
-                        class="btn btn-warning btn-sm">Contraofertar</button>
-                    <button type="button" @click="answer(offer, 'reject')" :disabled="busyId !== null"
-                        class="btn btn-ghost btn-sm">Rechazar</button>
-                    <button type="button" @click="toggleThread(offer)" class="btn btn-outline btn-sm">
+                    <BaseButton type="button" @click="answer(offer, 'accept')" :disabled="busyId !== null" variant="confirmar" size="sm">Aceptar</BaseButton>
+                    <BaseButton type="button" @click="openCounter(offer)" :disabled="busyId !== null" variant="aviso" size="sm">Contraofertar</BaseButton>
+                    <BaseButton type="button" @click="answer(offer, 'reject')" :disabled="busyId !== null" variant="discreto" size="sm">Rechazar</BaseButton>
+                    <BaseButton type="button" @click="toggleThread(offer)" variant="neutro" size="sm">
                         {{ threadOfferId === offer.id ? "Ocultar negociación" : "Ver negociación" }}
-                    </button>
+                    </BaseButton>
                 </div>
 
                 <OfferThread v-if="threadOfferId === offer.id" :offer-id="offer.id"
@@ -169,17 +167,15 @@ onMounted(loadOffers);
                         placeholder="Ej. Te acepto si agregas unos apuntes"
                         class="textarea textarea-bordered w-full text-sm focus:textarea-primary"></textarea>
                     <div class="flex justify-end gap-2">
-                        <button type="button" @click="cancelCounter" :disabled="busyId !== null"
-                            class="btn btn-ghost btn-sm">Cancelar</button>
-                        <button type="submit" :disabled="busyId !== null"
-                            class="btn btn-primary btn-sm">Enviar contraoferta</button>
+                        <BaseButton type="button" @click="cancelCounter" :disabled="busyId !== null" variant="discreto" size="sm">Cancelar</BaseButton>
+                        <BaseButton type="submit" :disabled="busyId !== null" variant="accion" size="sm">Enviar contraoferta</BaseButton>
                     </div>
                 </form>
             </li>
         </ul>
 
         <div class="modal-action mt-6">
-            <button type="button" @click="$emit('close')" class="btn btn-primary">Cerrar</button>
+            <BaseButton type="button" @click="$emit('close')" variant="accion">Cerrar</BaseButton>
         </div>
     </div>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, computed, onMounted } from "vue";
 import { useOffersStore } from "@/stores/offers";
 import { useAuthStore } from "@/stores/auth";
@@ -93,7 +94,7 @@ onMounted(load);
         </div>
 
         <template v-else-if="offer">
-            <p class="text-sm text-base-content/70 mb-3">
+            <p class="texto-secundario mb-3">
                 <strong>{{ offer.targetPost?.title }}</strong>
                 · {{ offer.targetPost?.owner?.name }} y {{ offer.proposer?.name }}
             </p>
@@ -121,7 +122,7 @@ onMounted(load);
                     placeholder="Ej. Acepto, te llevo los apuntes mañana"
                     class="textarea textarea-bordered w-full text-sm focus:textarea-primary"></textarea>
                 <div class="flex justify-end">
-                    <button type="submit" :disabled="sending" class="btn btn-primary btn-sm">Responder</button>
+                    <BaseButton type="submit" :disabled="sending" variant="accion" size="sm">Responder</BaseButton>
                 </div>
             </form>
         </template>

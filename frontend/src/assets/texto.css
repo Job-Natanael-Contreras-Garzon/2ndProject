@@ -1,0 +1,68 @@
+/* ==========================================================================
+   TEXTO  ·  clases por USO. Se usan igual que cualquier clase: class="texto-titulo-pagina"
+   Los valores (tamaño, peso, opacidad) están en tokens.css.
+   ========================================================================== */
+
+/* Título de cada pantalla (h1) */
+@utility texto-titulo-pagina {
+  font-size: var(--texto-titulo-pagina-tamano);
+  line-height: var(--texto-titulo-pagina-altura);
+  font-weight: var(--texto-titulo-pagina-peso);
+  color: var(--color-primary);
+}
+
+/* Título de un formulario o de un modal (h2 / h3) */
+@utility texto-titulo-seccion {
+  font-size: var(--texto-titulo-seccion-tamano);
+  line-height: var(--texto-titulo-seccion-altura);
+  font-weight: var(--texto-titulo-seccion-peso);
+}
+
+/* Título dentro de una tarjeta (h2) */
+@utility texto-titulo-tarjeta {
+  font-size: var(--texto-titulo-tarjeta-tamano);
+  line-height: var(--texto-titulo-tarjeta-altura);
+  font-weight: var(--texto-titulo-tarjeta-peso);
+}
+
+/* Subtítulos y descripciones */
+@utility texto-secundario {
+  font-size: var(--texto-secundario-tamano);
+  line-height: var(--texto-secundario-altura);
+  color: color-mix(in oklab, var(--color-base-content) var(--texto-secundario-opacidad), transparent);
+}
+
+/* Texto chico de apoyo: fechas, notas, pistas */
+@utility texto-etiqueta {
+  font-size: var(--texto-etiqueta-tamano);
+  line-height: var(--texto-etiqueta-altura);
+  color: color-mix(in oklab, var(--color-base-content) var(--texto-etiqueta-opacidad), transparent);
+}
+
+/* Encabezados de tabla o de grupo: MAYÚSCULAS chicas */
+@utility texto-encabezado {
+  font-size: var(--texto-etiqueta-tamano);
+  line-height: var(--texto-etiqueta-altura);
+  font-weight: 600;
+  letter-spacing: var(--texto-etiqueta-espaciado);
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-base-content) var(--texto-etiqueta-opacidad), transparent);
+}
+
+/* Número grande (el color se le pone aparte: text-info, text-success…) */
+@utility texto-dato {
+  font-size: var(--texto-dato-tamano);
+  line-height: var(--texto-dato-altura);
+  font-weight: var(--texto-dato-peso);
+}
+
+/* Nombres técnicos (eventos) */
+@utility texto-codigo {
+  font-family: var(--font-mono);
+  font-size: var(--texto-codigo-tamano);
+}
+
+/* Texto blanco sobre un fondo de color fuerte */
+@utility texto-sobre-color {
+  color: var(--color-sobre-color);
+}

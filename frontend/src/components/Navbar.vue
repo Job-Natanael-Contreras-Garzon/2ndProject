@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import logo from "@/assets/logo.png";
@@ -18,9 +19,9 @@ async function logout() {
 
 
             <div class="flex-none">
-                <RouterLink :to="{ name: 'dashboard' }" class="btn btn-ghost px-2 normal-case">
+                <BaseButton :to="{ name: 'dashboard' }" as="RouterLink" variant="discreto" class="px-2 normal-case">
                     <img :src="logo" alt="Logo" class="h-8 w-auto" />
-                </RouterLink>
+                </BaseButton>
             </div>
 
             <div class="flex items-center gap-4">
@@ -57,9 +58,9 @@ async function logout() {
                     </li>
                 </ul>
 
-                <button @click="logout" class="btn btn-error btn-sm text-white">
+                <BaseButton @click="logout" variant="peligro" size="sm">
                     Cerrar sesión
-                </button>
+                </BaseButton>
             </div>
 
         </div>

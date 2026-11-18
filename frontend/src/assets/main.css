@@ -1,2 +1,9 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
+
+/* Cada archivo es una sección del diseño: */
+@import "./tokens.css"; /* los valores: colores claro/oscuro, radio, tamaños y pesos de texto */
+@import "./texto.css"; /* las clases de texto por uso (usan los tokens) */
+/* Los botones están en components/BaseButton.vue */

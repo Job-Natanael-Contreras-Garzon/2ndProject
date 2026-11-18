@@ -1,0 +1,101 @@
+/* ==========================================================================
+   TOKENS  ·  todos los VALORES de diseño de la app viven en este archivo
+   --------------------------------------------------------------------------
+   Cambia un valor aquí y cambia en todas las pantallas. Los nombres son por
+   USO (no por apariencia) y son los mismos que irán como variables en Figma.
+   Las clases que usan estos valores están en texto.css (texto) y en
+   components/BaseButton.vue (botones).
+   ========================================================================== */
+
+/* Colores y radios. Nombre por uso → variable de daisyUI:
+     color de acción ......... --color-primary   (Publicar, Hacer oferta…)
+     color de éxito/confirmar  --color-success   (Confirmar entrega, Aceptar)
+     color de aviso .......... --color-warning   (Contraofertar)
+     color de error/peligro .. --color-error     (Cerrar sesión, alertas)
+     color de fondo .......... --color-base-100 / 200 / 300
+     color de texto .......... --color-base-content
+     radio de los controles .. --radius-field
+   Hay un bloque para el tema claro y otro para el oscuro. */
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+
+  --color-primary: oklch(45% 0.24 277.023);
+  --color-primary-content: oklch(93% 0.034 272.788);
+  --color-success: oklch(76% 0.177 163.223);
+  --color-success-content: oklch(37% 0.077 168.94);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-error-content: oklch(27% 0.105 12.094);
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(98% 0 0);
+  --color-base-300: oklch(95% 0 0);
+  --color-base-content: oklch(21% 0.006 285.885);
+
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+}
+
+@plugin "daisyui/theme" {
+  name: "dark";
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-primary: oklch(58% 0.233 277.117);
+  --color-primary-content: oklch(96% 0.018 272.314);
+  --color-success: oklch(76% 0.177 163.223);
+  --color-success-content: oklch(37% 0.077 168.94);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(41% 0.112 45.904);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-error-content: oklch(27% 0.105 12.094);
+  --color-info: oklch(74% 0.16 232.661);
+  --color-info-content: oklch(29% 0.066 243.157);
+
+  --color-base-100: oklch(25.33% 0.016 252.42);
+  --color-base-200: oklch(23.26% 0.014 253.1);
+  --color-base-300: oklch(21.15% 0.012 254.09);
+  --color-base-content: oklch(97.807% 0.029 256.847);
+
+  --radius-field: 0.25rem;
+  --radius-box: 0.5rem;
+}
+
+/* Texto: tamaño, altura de línea y peso de cada uso */
+:root {
+  --texto-titulo-pagina-tamano: 1.875rem;   /* 30 px */
+  --texto-titulo-pagina-altura: 2.25rem;
+  --texto-titulo-pagina-peso: 800;
+
+  --texto-titulo-seccion-tamano: 1.25rem;   /* 20 px */
+  --texto-titulo-seccion-altura: 1.75rem;
+  --texto-titulo-seccion-peso: 600;
+
+  --texto-titulo-tarjeta-tamano: 1.125rem;  /* 18 px */
+  --texto-titulo-tarjeta-altura: 1.75rem;
+  --texto-titulo-tarjeta-peso: 600;
+
+  --texto-secundario-tamano: 0.875rem;      /* 14 px */
+  --texto-secundario-altura: 1.25rem;
+  --texto-secundario-opacidad: 70%;         /* cuánto del color de texto */
+
+  --texto-etiqueta-tamano: 0.75rem;         /* 12 px */
+  --texto-etiqueta-altura: 1rem;
+  --texto-etiqueta-opacidad: 60%;
+  --texto-etiqueta-espaciado: 0.05em;       /* separación entre letras de los encabezados */
+
+  --texto-dato-tamano: 1.875rem;            /* números grandes (Analítica) */
+  --texto-dato-altura: 2.25rem;
+  --texto-dato-peso: 800;
+
+  --texto-codigo-tamano: 0.75rem;
+
+  /* Único color "escrito a mano" del proyecto: texto blanco encima de un color fuerte
+     (botón de peligro, insignias) */
+  --color-sobre-color: #ffffff;
+}

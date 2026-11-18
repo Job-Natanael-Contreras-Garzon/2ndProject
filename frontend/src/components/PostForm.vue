@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, watch } from "vue";
 import { usePostsStore } from "@/stores/posts";
 import { track } from "@/utils/analitica";
@@ -97,13 +98,13 @@ async function handleSubmit() {
             </div>
 
             <div class="modal-action mt-6">
-                <button type="button" @click="$emit('cancel')" class="btn btn-ghost" :disabled="submitting">
+                <BaseButton type="button" @click="$emit('cancel')" :disabled="submitting" variant="discreto">
                     Cancelar
-                </button>
-                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                </BaseButton>
+                <BaseButton type="submit" :disabled="submitting" variant="accion">
                     <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
                     {{ post ? "Guardar cambios" : "Publicar" }}
-                </button>
+                </BaseButton>
             </div>
         </form>
     </div>

@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { ref, computed, onMounted } from "vue";
 import { usePostsStore } from "@/stores/posts";
 import { useOffersStore } from "@/stores/offers";
@@ -53,7 +54,7 @@ onMounted(() => {
 
 <template>
     <div>
-        <p class="text-sm text-base-content/70 mb-3">
+        <p class="texto-secundario mb-3">
             Oferta por <strong>{{ post.title }}</strong> de {{ post.owner?.name }}
         </p>
 
@@ -70,7 +71,7 @@ onMounted(() => {
                         {{ mine.title }}
                     </option>
                 </select>
-                <p v-if="myAvailablePosts.length === 0" class="text-xs text-base-content/60 mt-1">
+                <p v-if="myAvailablePosts.length === 0" class="texto-etiqueta mt-1">
                     No tienes productos disponibles para ofrecer.
                 </p>
             </div>
@@ -83,13 +84,13 @@ onMounted(() => {
             </div>
 
             <div class="modal-action mt-6">
-                <button type="button" @click="$emit('cancel')" class="btn btn-ghost" :disabled="submitting">
+                <BaseButton type="button" @click="$emit('cancel')" :disabled="submitting" variant="discreto">
                     Cancelar
-                </button>
-                <button type="submit" class="btn btn-primary" :disabled="submitting">
+                </BaseButton>
+                <BaseButton type="submit" :disabled="submitting" variant="accion">
                     <span v-if="submitting" class="loading loading-spinner loading-sm"></span>
                     Enviar oferta
-                </button>
+                </BaseButton>
             </div>
         </form>
     </div>

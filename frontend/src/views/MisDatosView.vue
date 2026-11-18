@@ -1,4 +1,5 @@
 <script setup>
+import BaseButton from "@/components/BaseButton.vue";
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
@@ -85,15 +86,15 @@ async function eliminarCuenta() {
     <div class="mx-auto max-w-3xl p-6">
         <PageTitle title="Mis datos" subtitle="Lo que Trueque U guarda sobre ti" />
 
-        <div v-if="cargando" class="mt-6 text-sm text-base-content/60">Cargando tus datos...</div>
+        <div v-if="cargando" class="mt-6 texto-secundario">Cargando tus datos...</div>
         <div v-else-if="errorCarga" role="alert" class="alert alert-error mt-6 text-sm">{{ errorCarga }}</div>
 
         <template v-else>
             <div class="card bg-base-100 shadow-sm border border-base-300 mt-6 p-6">
-                <h2 class="text-lg font-semibold">Tu cuenta</h2>
+                <h2 class="texto-titulo-tarjeta">Tu cuenta</h2>
                 <p class="mt-2">{{ datos.usuario.nombre }}</p>
-                <p class="text-sm text-base-content/60">{{ datos.usuario.correo }}</p>
-                <p class="text-sm text-base-content/60">Registrada el {{ fecha(datos.usuario.registradoEn) }}</p>
+                <p class="texto-secundario">{{ datos.usuario.correo }}</p>
+                <p class="texto-secundario">Registrada el {{ fecha(datos.usuario.registradoEn) }}</p>
 
                 <ul class="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <li v-for="fila in resumen" :key="fila.clave" class="flex justify-between text-sm">
@@ -109,31 +110,31 @@ async function eliminarCuenta() {
                 </details>
 
                 <div class="mt-4">
-                    <button type="button" @click="descargar" class="btn btn-outline">Descargar mis datos (JSON)</button>
+                    <BaseButton type="button" @click="descargar" variant="neutro">Descargar mis datos (JSON)</BaseButton>
                 </div>
             </div>
 
             <div class="card bg-base-100 shadow-sm border border-base-300 mt-6 p-6">
-                <h2 class="text-lg font-semibold">Eliminar mi cuenta</h2>
-                <p class="mt-2 text-sm text-base-content/70">
+                <h2 class="texto-titulo-tarjeta">Eliminar mi cuenta</h2>
+                <p class="mt-2 texto-secundario">
                     Borra tu cuenta y tus datos de forma permanente. Si quieres conservarlos, descárgalos antes.
                 </p>
                 <div class="mt-4">
-                    <button type="button" @click="abrirEliminar" class="btn btn-outline">Eliminar mi cuenta</button>
+                    <BaseButton type="button" @click="abrirEliminar" variant="neutro">Eliminar mi cuenta</BaseButton>
                 </div>
             </div>
         </template>
 
         <Modal v-model="mostrarEliminar" title="Eliminar mi cuenta">
-            <p class="text-sm text-base-content/70">
+            <p class="texto-secundario">
                 Se borrarán de forma permanente tu cuenta, tus publicaciones, tus ofertas y las que recibiste en tus
                 publicaciones, tus calificaciones y tu historial. No se puede deshacer.
             </p>
-            <p class="mt-2 text-sm text-base-content/70">
+            <p class="mt-2 texto-secundario">
                 Después ya no podrás iniciar sesión con esta cuenta, pero puedes crear una nueva cuando quieras. Tu
                 nombre puede seguir apareciendo en el historial de las personas con las que intercambiaste.
             </p>
-            <p class="mt-2 text-sm text-base-content/70">
+            <p class="mt-2 texto-secundario">
                 Si tienes un intercambio en curso, primero tienes que completarlo o cancelarlo.
             </p>
 
@@ -142,10 +143,8 @@ async function eliminarCuenta() {
             </div>
 
             <div class="modal-action mt-4">
-                <button type="button" @click="mostrarEliminar = false" :disabled="eliminando"
-                    class="btn btn-outline">Volver</button>
-                <button type="button" @click="eliminarCuenta" :disabled="eliminando"
-                    class="btn btn-outline">Eliminar mi cuenta</button>
+                <BaseButton type="button" @click="mostrarEliminar = false" :disabled="eliminando" variant="neutro">Volver</BaseButton>
+                <BaseButton type="button" @click="eliminarCuenta" :disabled="eliminando" variant="neutro">Eliminar mi cuenta</BaseButton>
             </div>
         </Modal>
     </div>

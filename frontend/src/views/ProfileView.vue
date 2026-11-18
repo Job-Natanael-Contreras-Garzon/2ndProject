@@ -17,18 +17,18 @@ const calificaciones = computed(() => authStore.user?.calificaciones || { promed
 
         <div class="card bg-base-100 shadow-sm border border-base-300 mt-6 p-6">
             <p class="text-lg font-semibold">{{ authStore.user?.name }}</p>
-            <p class="text-sm text-base-content/60">{{ authStore.user?.email }}</p>
+            <p class="texto-secundario">{{ authStore.user?.email }}</p>
 
             <div class="mt-4 flex gap-8">
                 <div>
-                    <p class="text-sm text-base-content/60">Promedio</p>
-                    <p class="text-3xl font-bold" data-testid="promedio">
+                    <p class="texto-secundario">Promedio</p>
+                    <p class="texto-dato" data-testid="promedio">
                         {{ calificaciones.cantidad > 0 ? calificaciones.promedio : "-" }}
                     </p>
                 </div>
                 <div>
-                    <p class="text-sm text-base-content/60">Calificaciones</p>
-                    <p class="text-3xl font-bold" data-testid="cantidad">{{ calificaciones.cantidad }}</p>
+                    <p class="texto-secundario">Calificaciones</p>
+                    <p class="texto-dato" data-testid="cantidad">{{ calificaciones.cantidad }}</p>
                 </div>
             </div>
         </div>
