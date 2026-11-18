@@ -1,10 +1,11 @@
 const { Op } = require("sequelize");
 
-function buildPostWhere({ q, category, condition, state }) {
+// likeOp: en Postgres se usa Op.iLike para que la búsqueda no distinga mayúsculas (SQLite ya no las distingue)
+function buildPostWhere({ q, category, condition, state }, likeOp = Op.like) {
     const where = {};
 
     if (q) {
-        where.title = { [Op.like]: `%${q}%` };
+        where.title = { [likeOp]: `%${q}%` };
     }
     if (category) {
         where.category = category;

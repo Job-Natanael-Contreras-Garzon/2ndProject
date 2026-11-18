@@ -8,6 +8,10 @@ const users = [
     { name: "Usuario Invitado", email: "invitado@truequeu.com" },
 ];
 
+// Usuaria de prueba para la demo y para el ingeniero. Va aparte de `users` para no
+// cambiar quién reserva cada publicación del seed (los E2E dependen de eso).
+const usuarioDemo = { name: "Eudenia Flores", email: "eudeniaflores@gmail.com", password: "eude1234" };
+
 const posts = [
     { title: "Cálculo I – Stewart", category: "libros", condition: "usado", state: "disponible", owner: 0 },
     { title: "Cálculo diferencial – Larson", category: "libros", condition: "usado", state: "disponible", owner: 1 },
@@ -134,6 +138,13 @@ async function run() {
             });
         }
         console.log(`+ ${offers.length} ofertas pendientes`);
+
+        const { password: claveDemo, ...datosDemo } = usuarioDemo;
+        await User.findOrCreate({
+            where: { email: datosDemo.email },
+            defaults: { ...datosDemo, password: await bcrypt.hash(claveDemo, 10) },
+        });
+        console.log(`+ Usuaria de prueba: "${datosDemo.name}", "${datosDemo.email}"`);
 
         console.log("Carga de datos inicial completada.");
         process.exit(0);

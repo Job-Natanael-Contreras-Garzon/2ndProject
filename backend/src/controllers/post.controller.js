@@ -1,5 +1,5 @@
 const { Op } = require("sequelize");
-const { sequelize, Post, User, Activity, Offer, OfferMessage } = require("../models");
+const { Post, User, Activity } = require("../models");
 const { HttpError } = require("../middleware/errorHandler");
 const {
     getConfirmError,
@@ -8,14 +8,10 @@ const {
     getEditError,
 } = require("../rules/postRules");
 const { buildPostWhere } = require("../rules/postFilters");
+const { getUserName, confirmarEntrega, cancelarIntercambio } = require("../services/exchange.service");
 
 const categories = ["libros", "electronica", "ropa", "otros"];
 const conditions = ["nuevo", "usado"];
-
-async function getUserName(id) {
-    const user = await User.findByPk(id);
-    return user ? user.name : "Usuario eliminado";
-}
 
 exports.list = async (req, res) => {
     const posts = await Post.findAll({
@@ -28,7 +24,9 @@ exports.list = async (req, res) => {
 
 exports.explore = async (req, res) => {
     const { q, category, condition, state } = req.query;
-    const where = buildPostWhere({ q, category, condition, state });
+    // En Postgres la búsqueda por título no debe distinguir mayúsculas de minúsculas
+    const likeOp = process.env.DATABASE_URL ? Op.iLike : Op.like;
+    const where = buildPostWhere({ q, category, condition, state }, likeOp);
     where.userId = { [Op.ne]: req.user.id };
 
     const posts = await Post.findAll({
@@ -194,39 +192,7 @@ exports.confirm = async (req, res) => {
         throw new HttpError(isParticipant ? 400 : 403, error);
     }
 
-    const isOwner = post.userId === req.user.id;
-    const otherId = isOwner ? post.reservedById : post.userId;
-    const flags = isOwner ? { ownerConfirmed: true } : { receiverConfirmed: true };
-    const ownerDone = isOwner || post.ownerConfirmed;
-    const receiverDone = !isOwner || post.receiverConfirmed;
-    const completed = Boolean(ownerDone && receiverDone);
-
-    const myName = await getUserName(req.user.id);
-    const otherName = await getUserName(otherId);
-    const myRole = isOwner ? "entregador" : "receptor";
-    const otherRole = isOwner ? "receptor" : "entregador";
-
-    await post.update(completed ? { ...flags, state: "intercambiado" } : flags);
-
-    // Historial de ambas partes: quién confirmó la entrega
-    await Activity.create({
-        userId: req.user.id,
-        type: "entrega_confirmada",
-        role: myRole,
-        postId: post.id,
-        postTitle: post.title,
-        otherUserName: otherName,
-        actorId: req.user.id,
-    });
-    await Activity.create({
-        userId: otherId,
-        type: "entrega_confirmada",
-        role: otherRole,
-        postId: post.id,
-        postTitle: post.title,
-        otherUserName: myName,
-        actorId: req.user.id,
-    });
+    const completed = await confirmarEntrega({ post, userId: req.user.id });
 
     if (!completed) {
         return res.json({
@@ -235,23 +201,6 @@ exports.confirm = async (req, res) => {
             post,
         });
     }
-
-    await Activity.create({
-        userId: post.reservedById,
-        type: "intercambio_completado",
-        role: "receptor",
-        postId: post.id,
-        postTitle: post.title,
-        otherUserName: await getUserName(post.userId),
-    });
-    await Activity.create({
-        userId: post.userId,
-        type: "intercambio_completado",
-        role: "entregador",
-        postId: post.id,
-        postTitle: post.title,
-        otherUserName: await getUserName(post.reservedById),
-    });
 
     res.json({
         message: "Intercambio completado.",
@@ -277,73 +226,7 @@ exports.cancel = async (req, res) => {
         throw new HttpError(isParticipant ? 400 : 403, error);
     }
 
-    const text = reason.trim();
-    const isOwner = post.userId === req.user.id;
-    const otherId = isOwner ? post.reservedById : post.userId;
-    const myName = await getUserName(req.user.id);
-    const otherName = await getUserName(otherId);
-
-    await sequelize.transaction(async (t) => {
-        await post.update(
-            {
-                state: "disponible",
-                reservedById: null,
-                ownerConfirmed: false,
-                receiverConfirmed: false,
-            },
-            { transaction: t },
-        );
-
-        // La oferta aceptada queda cancelada con el motivo en su hilo; las demás
-        // ya estaban rechazadas y siguen así.
-        const accepted = await Offer.findOne({
-            where: {
-                targetPostId: post.id,
-                proposerId: post.userId === req.user.id ? otherId : req.user.id,
-                status: "aceptada",
-            },
-            transaction: t,
-        });
-        if (accepted) {
-            await accepted.update({ status: "cancelada" }, { transaction: t });
-            await OfferMessage.create(
-                {
-                    offerId: accepted.id,
-                    senderId: req.user.id,
-                    kind: "sistema",
-                    text: `${myName} canceló el intercambio. Motivo: ${text}`,
-                },
-                { transaction: t },
-            );
-        }
-
-        await Activity.create(
-            {
-                userId: req.user.id,
-                type: "intercambio_cancelado",
-                role: isOwner ? "entregador" : "receptor",
-                postId: post.id,
-                postTitle: post.title,
-                otherUserName: otherName,
-                actorId: req.user.id,
-                reason: text,
-            },
-            { transaction: t },
-        );
-        await Activity.create(
-            {
-                userId: otherId,
-                type: "intercambio_cancelado",
-                role: isOwner ? "receptor" : "entregador",
-                postId: post.id,
-                postTitle: post.title,
-                otherUserName: myName,
-                actorId: req.user.id,
-                reason: text,
-            },
-            { transaction: t },
-        );
-    });
+    await cancelarIntercambio({ post, userId: req.user.id, reason });
 
     res.json({ message: "Intercambio cancelado.", post });
 };

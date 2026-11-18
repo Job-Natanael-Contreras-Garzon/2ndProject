@@ -6,7 +6,8 @@ const { errorHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
-app.use(cors());
+// CORS_ORIGIN: dirección del frontend en la nube. Sin ella se aceptan todas (desarrollo).
+app.use(cors(process.env.CORS_ORIGIN ? { origin: process.env.CORS_ORIGIN.split(",") } : undefined));
 app.use(express.json());
 
 app.use("/api", require("./routes/auth.routes"));
@@ -22,7 +23,7 @@ app.use(errorHandler);
 async function start() {
     try {
         await sequelize.sync();
-        console.log("Base de datos SQLite sincronizada exitosamente");
+        console.log(`Base de datos (${sequelize.getDialect()}) sincronizada exitosamente`);
         app.listen(port, () => {
             console.log(`Servidor activo en: http://localhost:${port}`);
         });
