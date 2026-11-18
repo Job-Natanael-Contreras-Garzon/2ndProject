@@ -1,0 +1,36 @@
+# Despliegue en Render (Blueprint). La base de datos vive en Neon (Postgres), no en Render.
+services:
+  # Backend: Express + Sequelize
+  - type: web
+    name: trueque-u-api
+    runtime: node
+    plan: free
+    buildCommand: npm install -g pnpm@12.16.1 && pnpm install --frozen-lockfile
+    startCommand: pnpm --dir backend exec node src/app.js
+    healthCheckPath: /api/public-info
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL # cadena de conexión de Neon
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN # dirección del frontend, por ejemplo https://trueque-u.onrender.com
+        sync: false
+
+  # Frontend: Vue compilado (archivos estáticos)
+  - type: web
+    name: trueque-u
+    runtime: static
+    buildCommand: npm install -g pnpm@12.16.1 && pnpm install --frozen-lockfile && pnpm --dir frontend build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: VITE_API_URL # dirección del backend + /api, por ejemplo https://trueque-u-api.onrender.com/api
+        sync: false
+    routes:
+      # Vue Router: cualquier ruta devuelve index.html
+      - type: rewrite
+        source: /*
+        destination: /index.html

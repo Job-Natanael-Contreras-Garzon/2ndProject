@@ -3,7 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test:unit": "pnpm -r test:coverage",
+    "test:e2e": "playwright test --project=chromium",
+    "lint": "eslint .",
+    "format": "prettier --write",
+    "format:check": "prettier --check"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -17,7 +23,12 @@
   "packageManager": "pnpm@12.16.1",
   "type": "module",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
-    "@types/node": "^26.6.6"
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "eslint-plugin-vue": "^10.12.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1"
   }
 }
