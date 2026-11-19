@@ -76,7 +76,7 @@ export default defineConfig({
       command: 'node src/database/seed.js && node src/app.js',
       cwd: './backend',
       url: 'http://localhost:3000/api/public-info',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 60_000,
     },
     {
@@ -85,7 +85,7 @@ export default defineConfig({
       env: { VITE_GA_ID: 'G-E2ETEST' },
       cwd: './frontend',
       url: 'http://localhost:5173',
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 60_000,
     },
   ],
